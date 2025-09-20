@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoorState, SensorReading } from '../shared/entities';
 import { MqttModule } from '../mqtt/mqtt.module';
+import { ConfigurationModule } from '../shared/config/config.module';
 import { DoorService } from './door.service';
 import { RuuviParser } from './ruuvi.parser';
 
@@ -9,6 +10,7 @@ import { RuuviParser } from './ruuvi.parser';
   imports: [
     TypeOrmModule.forFeature([DoorState, SensorReading]),
     MqttModule,
+    ConfigurationModule,
   ],
   providers: [DoorService, RuuviParser],
   exports: [DoorService, RuuviParser],
