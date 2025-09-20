@@ -15,14 +15,14 @@ export class SensorReading {
   @Column()
   sensorId: string;
 
-  @Column('decimal', { precision: 5, scale: 2 })
-  temperature: number;
+  @Column('decimal', { precision: 5, scale: 2, nullable: true })
+  temperature: number | null;
 
-  @Column('decimal', { precision: 5, scale: 2 })
-  humidity: number;
+  @Column('decimal', { precision: 5, scale: 2, nullable: true })
+  humidity: number | null;
 
-  @Column('decimal', { precision: 7, scale: 2 })
-  pressure: number;
+  @Column('decimal', { precision: 7, scale: 2, nullable: true })
+  pressure: number | null;
 
   @Column()
   @Index()

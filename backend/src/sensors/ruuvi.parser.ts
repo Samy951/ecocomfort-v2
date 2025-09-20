@@ -40,7 +40,7 @@ export class RuuviParser implements OnModuleInit {
 
   private handleRuuviMessage(topic: string, payload: Buffer): void {
     try {
-      const topicRegex = /pws-packet\/202481598160802\/(\d+)\/(\d+)/;
+      const topicRegex = /pws-packet\/202481601481463\/(\d+)\/(\d+)/;
       const match = topic.match(topicRegex);
 
       if (!match) {

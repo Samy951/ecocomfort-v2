@@ -28,7 +28,7 @@ export class ConfigurationService {
       mqtt: z.object({
         broker: z.string().min(1),
         doorTopic: z.string().default('sensor/door_sensor/RESULT'),
-        ruuviTopic: z.string().default('pws-packet/202481598160802/+'),
+        ruuviTopic: z.string().default('pws-packet/202481601481463/+/+'), // Fixed gateway ID with sensor+datatype wildcards
       }),
       openWeather: z.object({
         apiKey: z.string().min(1),
@@ -54,7 +54,7 @@ export class ConfigurationService {
       mqtt: {
         broker: this.nestConfigService.get<string>('MQTT_BROKER'),
         doorTopic: this.nestConfigService.get<string>('MQTT_DOOR_TOPIC') ?? 'sensor/door_sensor/RESULT',
-        ruuviTopic: this.nestConfigService.get<string>('MQTT_RUUVI_TOPIC') ?? 'pws-packet/202481598160802/+',
+        ruuviTopic: this.nestConfigService.get<string>('MQTT_RUUVI_TOPIC') ?? 'pws-packet/202481601481463/+/+',
       },
       openWeather: {
         apiKey: this.nestConfigService.get<string>('OPENWEATHER_API_KEY'),

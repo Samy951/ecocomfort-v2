@@ -61,7 +61,13 @@ export class MqttService implements IMqttService, OnModuleInit, OnModuleDestroy 
         this.logger.error(`Error: ${error.message}`);
       });
 
-      this.client.on('message', (topic, payload) => {
+      this.client.on('message', (topic, payload, packet) => {
+        // Log if this is a retained message
+        if (packet.retain) {
+          this.logger.log(`Received RETAINED message on ${topic}: ${payload.toString().slice(0, 100)}`);
+        } else {
+          this.logger.log(`Received message on ${topic}: ${payload.toString().slice(0, 100)}`);
+        }
         this.distributeMessage(topic, payload);
       });
 
@@ -78,9 +84,12 @@ export class MqttService implements IMqttService, OnModuleInit, OnModuleDestroy 
     const topics = [mqttConfig.doorTopic, mqttConfig.ruuviTopic];
 
     topics.forEach(topic => {
-      this.client!.subscribe(topic, (error) => {
+      // Subscribe with QoS 1 to ensure message delivery and receive retained messages
+      this.client!.subscribe(topic, { qos: 1 }, (error) => {
         if (error) {
           this.logger.error(`Failed to subscribe to ${topic}: ${error.message}`);
+        } else {
+          this.logger.log(`Subscribed to ${topic} (QoS 1, retained messages enabled)`);
         }
       });
     });
