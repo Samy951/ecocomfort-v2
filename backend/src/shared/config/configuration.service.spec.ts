@@ -20,7 +20,7 @@ describe('ConfigurationService', () => {
                 DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
                 MQTT_BROKER: 'mqtt://localhost:1883',
                 MQTT_DOOR_TOPIC: 'sensor/door_sensor/RESULT',
-                MQTT_RUUVI_TOPIC: 'pws-packet/202481598160802/+/+',
+                MQTT_RUUVI_TOPIC: 'pws-packet/202481601481463/+/+',
                 OPENWEATHER_API_KEY: 'test-api-key',
                 OPENWEATHER_LAT: 48.8566,
                 OPENWEATHER_LON: 2.3522,
@@ -52,7 +52,7 @@ describe('ConfigurationService', () => {
       const mqtt = service.mqtt;
       expect(mqtt.broker).toBe('mqtt://localhost:1883');
       expect(mqtt.doorTopic).toBe('sensor/door_sensor/RESULT');
-      expect(mqtt.ruuviTopic).toBe('pws-packet/202481598160802/+/+');
+      expect(mqtt.ruuviTopic).toBe('pws-packet/202481601481463/+/+');
     });
 
     it('should return correct openWeather config', () => {
