@@ -182,6 +182,10 @@ export class RuuviParser implements OnModuleInit {
     return roundedAverage;
   }
 
+  public getSensorData(sensorId: string): SensorState | null {
+    return this.sensorStates.get(sensorId) || null;
+  }
+
   private getUnit(measureType: string): string {
     switch (measureType) {
       case 'temperature': return '°C';
