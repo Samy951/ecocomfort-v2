@@ -13,7 +13,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Real-time endpoints - no cache, network only
-            urlPattern: /^http:\/\/localhost:8000\/api\/dashboard\/(sensor-data|overview)/i,
+            urlPattern: /^http:\/\/localhost:3000\/api\/dashboard\/(sensor-data|overview)/i,
             handler: 'NetworkOnly',
             options: {
               cacheName: 'realtime-api',
@@ -21,7 +21,7 @@ export default defineConfig({
           },
           {
             // Other API endpoints - cached with fast timeout
-            urlPattern: /^http:\/\/localhost:8000\/api\/.*/i,
+            urlPattern: /^http:\/\/localhost:3000\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
@@ -82,15 +82,15 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: 3000,
+    port: 3001,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },
       '/broadcasting/auth': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       }

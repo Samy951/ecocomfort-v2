@@ -3,37 +3,25 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900;
-    @apply text-white;
-    @apply font-sans antialiased;
-    @apply min-h-screen;
-    @apply overflow-x-hidden;
-    /* iOS specific optimizations */
-    -webkit-overflow-scrolling: touch;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Prevent zoom on inputs for iOS */
-    -webkit-text-size-adjust: 100%;
-  }
-
   html {
     @apply scroll-smooth;
-    /* Improve touch scrolling */
     touch-action: manipulation;
   }
 
-  /* Light mode overrides */
-  .light {
-    @apply bg-gradient-to-br from-slate-100 via-purple-50 to-slate-100;
+  body {
+    @apply font-inter antialiased;
+    @apply min-h-screen;
+    @apply overflow-x-hidden;
+    @apply bg-main-white text-main-black;
+    @apply dark:bg-main-black dark:text-main-white;
+
+    /* iOS optimizations */
+    -webkit-overflow-scrolling: touch;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
   }
 
-  /* Better support for viewport units */
-  :root {
-    --vh: 1vh;
-    --vw: 1vw;
-  }
-  
   /* Safe area support for iOS */
   @supports (padding: env(safe-area-inset-top)) {
     .safe-area-top {
@@ -48,120 +36,172 @@
     .safe-area-right {
       padding-right: env(safe-area-inset-right);
     }
-    .safe-area-pb {
-      padding-bottom: env(safe-area-inset-bottom, 1rem);
-    }
   }
 }
 
 @layer components {
-  /* Glass Card Component - Enhanced Glassmorphism */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 1rem;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.1);
-    /* Better mobile performance */
-    will-change: transform;
-    transform: translateZ(0);
+  /* Typography Components */
+  .text-h1-mobile {
+    @apply text-h1-mobile font-pangea text-main-black dark:text-main-white;
   }
 
-  .glass-card-hover {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 1rem;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-    will-change: transform;
-    transform: translateZ(0);
-  }
-  
-  .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(24px) saturate(200%);
-    transform: translateY(-2px);
-    box-shadow: 
-      0 16px 48px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  .text-h1-desktop {
+    @apply text-h1-desktop font-pangea text-main-black dark:text-main-white;
   }
 
-  /* Light mode variations */
-  .light .glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    border-color: rgba(255, 255, 255, 0.4);
+  .text-h2-mobile {
+    @apply text-h2-mobile font-pangea text-main-black dark:text-main-white;
   }
 
-  .light .glass-card-hover {
-    background: rgba(255, 255, 255, 0.7);
-    border-color: rgba(255, 255, 255, 0.4);
+  .text-h2-desktop {
+    @apply text-h2-desktop font-pangea text-main-black dark:text-main-white;
   }
 
-  .light .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(255, 255, 255, 0.6);
+  .text-h3-mobile {
+    @apply text-h3-mobile font-pangea text-main-black dark:text-main-white;
   }
 
-  /* Glass Button - Enhanced */
-  .glass-button {
-    @apply bg-white/20 dark:bg-white/10 backdrop-blur-sm border border-white/30 dark:border-white/20 rounded-xl px-4 py-2 text-white font-medium;
-    @apply hover:bg-white/30 dark:hover:bg-white/20 hover:border-white/40 dark:hover:border-white/30 hover:shadow-lg transition-all duration-200;
-    @apply active:scale-95 active:bg-white/40 dark:active:bg-white/30;
-    /* Smooth button interaction */
-    transform: translateZ(0);
-    will-change: transform, background-color, border-color;
+  .text-h3-desktop {
+    @apply text-h3-desktop font-pangea text-main-black dark:text-main-white;
   }
 
-  /* Glass Input */
-  .glass-input {
-    @apply bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/60;
-    @apply focus:bg-white/15 dark:focus:bg-white/10 focus:border-white/40 dark:focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all duration-200;
+  .text-h4-mobile {
+    @apply text-h4-mobile font-pangea text-main-black dark:text-main-white;
   }
 
-  /* Glass Navigation */
-  .glass-nav {
-    @apply bg-white/10 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10;
-    /* Enhanced blur for navigation */
-    backdrop-filter: blur(24px) saturate(200%);
+  .text-h4-desktop {
+    @apply text-h4-desktop font-pangea text-main-black dark:text-main-white;
   }
 
-  /* Animation classes */
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
+  .text-h5-mobile {
+    @apply text-h5-mobile font-pangea text-main-black dark:text-main-white;
   }
 
-  .animate-pulse-slow {
-    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .text-h5-desktop {
+    @apply text-h5-desktop font-pangea text-main-black dark:text-main-white;
   }
 
-  .animate-bounce-slow {
-    animation: bounce 2s infinite;
+  .text-paragraph-big {
+    @apply text-paragraph-big font-inter text-dark-grey dark:text-main-white;
+  }
+
+  .text-paragraph-medium {
+    @apply text-paragraph-medium font-inter text-dark-grey dark:text-main-white;
+  }
+
+  .text-paragraph-small {
+    @apply text-paragraph-small font-inter text-dark-grey dark:text-main-white;
+  }
+
+  .text-paragraph-tiny {
+    @apply text-paragraph-tiny font-inter text-dark-grey dark:text-main-white;
+  }
+
+  .text-link-big {
+    @apply text-link-big font-inter text-main-black dark:text-main-white;
+  }
+
+  .text-link-medium {
+    @apply text-link-medium font-inter text-main-black dark:text-main-white;
+  }
+
+  .text-link-small {
+    @apply text-link-small font-inter text-main-black dark:text-main-white;
+  }
+
+  /* Button Components */
+  .btn-big {
+    @apply h-btn-big px-6 py-3 rounded-xl font-inter font-bold transition-all duration-200;
+    @apply flex items-center justify-center gap-3;
+  }
+
+  .btn-medium {
+    @apply h-btn-medium px-5 py-2.5 rounded-lg font-inter font-bold transition-all duration-200;
+    @apply flex items-center justify-center gap-2;
+  }
+
+  .btn-small {
+    @apply h-btn-small px-4 py-2 rounded-lg font-inter font-bold transition-all duration-200;
+    @apply flex items-center justify-center gap-2;
+  }
+
+  .btn-link {
+    @apply h-btn-link px-0 py-0 font-inter font-bold transition-all duration-200;
+    @apply flex items-center justify-center gap-2;
+  }
+
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-main-green text-main-white hover:bg-emerald-70;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-green text-main-white hover:bg-main-black;
+  }
+
+  .btn-outline {
+    @apply bg-transparent border-2 border-main-white text-main-black dark:text-main-white;
+    @apply hover:bg-main-black hover:text-main-white dark:hover:bg-main-white dark:hover:text-main-black;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-main-black dark:text-main-white;
+    @apply hover:bg-light-grey dark:hover:bg-dark-grey;
+  }
+
+  /* Card Components */
+  .card {
+    @apply bg-main-white dark:bg-main-black border border-grey dark:border-dark-grey;
+    @apply rounded-2xl shadow-soft dark:shadow-medium;
+    @apply transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-medium dark:hover:shadow-strong hover:-translate-y-1;
+  }
+
+  .card-glass {
+    @apply bg-main-white/80 dark:bg-main-black/80 backdrop-blur-sm;
+    @apply border border-grey/50 dark:border-dark-grey/50;
+    @apply rounded-2xl shadow-soft;
+  }
+
+  /* Input Components */
+  .input {
+    @apply w-full px-4 py-3 rounded-lg border border-grey dark:border-dark-grey;
+    @apply bg-main-white dark:bg-main-black text-main-black dark:text-main-white;
+    @apply placeholder-medium-grey dark:placeholder-grey;
+    @apply focus:outline-none focus:ring-2 focus:ring-main-green/50 focus:border-main-green;
+    @apply transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-error focus:ring-error/50 focus:border-error;
+  }
+
+  /* Layout Components */
+  .container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
   }
 }
 
 @layer utilities {
-  /* Custom utility classes */
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Custom utilities */
+  .text-balance {
+    text-wrap: balance;
   }
 
-  .text-shadow-lg {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
-  }
-
-  /* Scrollbar styling */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    scrollbar-color: theme("colors.grey") transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -173,93 +213,71 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: theme("colors.grey");
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: theme("colors.medium-grey");
   }
 
   /* Performance optimizations */
-  .will-change-transform {
-    will-change: transform;
-  }
-
-  .will-change-auto {
-    will-change: auto;
-  }
-
   .gpu-accelerated {
     transform: translateZ(0);
     backface-visibility: hidden;
-    perspective: 1000px;
+    will-change: transform;
   }
 }
 
-/* Keyframes for custom animations */
-@keyframes glow {
-  0% {
-    box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+/* Responsive Typography */
+@media (min-width: 1024px) {
+  .text-h1-mobile {
+    @apply text-h1-desktop;
   }
-  100% {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 30px rgba(34, 197, 94, 0.5);
+
+  .text-h2-mobile {
+    @apply text-h2-desktop;
+  }
+
+  .text-h3-mobile {
+    @apply text-h3-desktop;
+  }
+
+  .text-h4-mobile {
+    @apply text-h4-desktop;
+  }
+
+  .text-h5-mobile {
+    @apply text-h5-desktop;
   }
 }
 
-/* PWA specific styles */
-@media (display-mode: standalone) {
-  .pwa-only {
-    display: block;
-  }
-}
-
-@media not (display-mode: standalone) {
-  .pwa-only {
-    display: none;
-  }
-}
-
-/* Dark mode specific adjustments */
-@media (prefers-color-scheme: dark) {
-  .auto-dark {
-    filter: invert(1) hue-rotate(180deg);
-  }
-}
-
-/* Responsive utilities */
-@media (max-width: 640px) {
-  .mobile-glass-card {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.15);
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .glass-card,
-  .glass-card-hover,
-  .glass-button {
-    border-width: 2px;
-    backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.9);
-    color: #000;
-  }
-}
-
-/* Reduce motion for accessibility */
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .glass-card-hover {
+  .btn-big,
+  .btn-medium,
+  .btn-small,
+  .btn-link,
+  .card-hover {
     transition: none;
   }
-  
-  .glass-card-hover:hover {
+
+  .card-hover:hover {
     transform: none;
   }
-  
-  .animate-glow,
-  .animate-pulse-slow,
-  .animate-bounce-slow {
-    animation: none;
+}
+
+@media (prefers-contrast: high) {
+  .card,
+  .input {
+    border-width: 2px;
+  }
+
+  .btn-primary {
+    @apply bg-main-black text-main-white;
+  }
+
+  .btn-secondary {
+    @apply bg-main-black text-main-white;
   }
 }
