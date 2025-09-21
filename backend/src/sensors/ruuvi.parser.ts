@@ -46,7 +46,12 @@ export class RuuviParser implements OnModuleInit {
 
   private handleRuuviMessage(topic: string, payload: Buffer): void {
     try {
-      const topicRegex = /pws-packet\/202481601481463\/(\d+)\/(\d+)/;
+      // Extract gateway ID from the configured topic pattern
+      const configuredTopic = this.configService.mqtt.ruuviTopic;
+      const gatewayIdMatch = configuredTopic.match(/pws-packet\/(\d+)\/\+\/\+/);
+      const gatewayId = gatewayIdMatch ? gatewayIdMatch[1] : '202481601481463';
+
+      const topicRegex = new RegExp(`pws-packet\\/${gatewayId}\\/(\\d+)\\/(\\d+)`);
       const match = topic.match(topicRegex);
 
       if (!match) {

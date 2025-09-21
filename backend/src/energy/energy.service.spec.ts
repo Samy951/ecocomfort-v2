@@ -8,6 +8,7 @@ import { RuuviParser } from '../sensors/ruuvi.parser';
 import { WeatherService, WeatherData } from './weather.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
 import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
+import { GamificationService } from '../gamification/gamification.service';
 import { mockService } from '../shared/testing/mockers';
 
 describe('EnergyService', () => {
@@ -18,6 +19,7 @@ describe('EnergyService', () => {
   let weatherService: jest.Mocked<WeatherService>;
   let configService: jest.Mocked<ConfigurationService>;
   let webSocketGateway: jest.Mocked<EcoWebSocketGateway>;
+  let gamificationService: jest.Mocked<GamificationService>;
 
   const mockConfig = {
     doorSurfaceM2: 2.0,
@@ -49,6 +51,9 @@ describe('EnergyService', () => {
         mockService(EcoWebSocketGateway, {
           emit: jest.fn(),
         }),
+        mockService(GamificationService, {
+          handleEnergyMetricCreated: jest.fn(),
+        }),
       ],
     }).compile();
 
@@ -59,6 +64,7 @@ describe('EnergyService', () => {
     weatherService = module.get(WeatherService);
     configService = module.get(ConfigurationService);
     webSocketGateway = module.get(EcoWebSocketGateway);
+    gamificationService = module.get(GamificationService);
   });
 
   describe('calculateEnergyLoss', () => {
@@ -319,6 +325,198 @@ describe('EnergyService', () => {
       expect(result.energyLossWatts).toBe(0.0);
       expect(result.costEuros).toBe(0.0);
       expect(result.co2EmissionsGrams).toBe(0.0);
+    });
+  });
+
+  describe('error handling and edge cases', () => {
+    const validInput: EnergyCalculationInput = {
+      doorStateId: 1,
+      durationSeconds: 60,
+      timestamp: new Date('2024-01-20T14:30:00.000Z'),
+    };
+
+    const mockDoorState = {
+      id: 1,
+      isOpen: true,
+      timestamp: new Date('2024-01-20T14:29:00.000Z'),
+    } as DoorState;
+
+    beforeEach(() => {
+      ruuviParser.getAverageIndoorTemperature.mockReturnValue(20.0);
+      doorStateRepository.findOne.mockResolvedValue(mockDoorState);
+      energyMetricRepository.create.mockReturnValue({} as any);
+      energyMetricRepository.save.mockResolvedValue({ id: 1 } as any);
+    });
+
+    it('should handle weather API failure gracefully', async () => {
+      weatherService.getOutdoorTemperature.mockResolvedValue(null);
+
+      await service.calculateEnergyLoss(validInput);
+
+      expect(energyMetricRepository.create).not.toHaveBeenCalled();
+      expect(energyMetricRepository.save).not.toHaveBeenCalled();
+      expect(webSocketGateway.emit).not.toHaveBeenCalled();
+    });
+
+    it('should handle corrupted RuuviTag data gracefully', async () => {
+      ruuviParser.getAverageIndoorTemperature.mockReturnValue(null);
+      weatherService.getOutdoorTemperature.mockResolvedValue({
+        temperature: 10.0,
+        source: 'api' as const,
+        timestamp: new Date(),
+      });
+
+      await service.calculateEnergyLoss(validInput);
+
+      expect(energyMetricRepository.create).not.toHaveBeenCalled();
+      expect(energyMetricRepository.save).not.toHaveBeenCalled();
+      expect(webSocketGateway.emit).not.toHaveBeenCalled();
+    });
+
+    it('should handle database save errors gracefully', async () => {
+      weatherService.getOutdoorTemperature.mockResolvedValue({
+        temperature: 10.0,
+        source: 'api' as const,
+        timestamp: new Date(),
+      });
+      energyMetricRepository.save.mockRejectedValue(new Error('Database error'));
+
+      await expect(service.calculateEnergyLoss(validInput)).resolves.not.toThrow();
+
+      expect(energyMetricRepository.create).toHaveBeenCalled();
+      expect(webSocketGateway.emit).not.toHaveBeenCalled();
+      expect(gamificationService.handleEnergyMetricCreated).not.toHaveBeenCalled();
+    });
+
+    it('should handle WebSocket emission errors gracefully', async () => {
+      weatherService.getOutdoorTemperature.mockResolvedValue({
+        temperature: 10.0,
+        source: 'api' as const,
+        timestamp: new Date(),
+      });
+      webSocketGateway.emit.mockImplementation(() => {
+        throw new Error('WebSocket error');
+      });
+
+      await expect(service.calculateEnergyLoss(validInput)).resolves.not.toThrow();
+
+      expect(energyMetricRepository.save).toHaveBeenCalled();
+    });
+
+    it('should handle gamification service errors gracefully', async () => {
+      weatherService.getOutdoorTemperature.mockResolvedValue({
+        temperature: 10.0,
+        source: 'api' as const,
+        timestamp: new Date(),
+      });
+      gamificationService.handleEnergyMetricCreated.mockRejectedValue(new Error('Gamification error'));
+
+      await expect(service.calculateEnergyLoss(validInput)).resolves.not.toThrow();
+
+      expect(energyMetricRepository.save).toHaveBeenCalled();
+      expect(webSocketGateway.emit).toHaveBeenCalled();
+    });
+  });
+
+  describe('temperature edge cases', () => {
+    it('should handle negative temperature difference (summer case)', () => {
+      const result = (service as any).performEnergyCalculation({
+        indoorTemp: 15.0,
+        outdoorTemp: 25.0,
+        durationSeconds: 120,
+      });
+
+      expect(result.deltaT).toBe(-10.0);
+      expect(result.energyLossWatts).toBe(-2.33);
+      expect(result.costEuros).toBe(-0.0004);
+      expect(result.co2EmissionsGrams).toBe(-0.13);
+    });
+
+    it('should handle zero temperature difference', () => {
+      const result = (service as any).performEnergyCalculation({
+        indoorTemp: 20.0,
+        outdoorTemp: 20.0,
+        durationSeconds: 60,
+      });
+
+      expect(result.deltaT).toBe(0.0);
+      expect(result.energyLossWatts).toBe(0.0);
+      expect(result.costEuros).toBe(0.0);
+      expect(result.co2EmissionsGrams).toBe(0.0);
+    });
+
+    it('should handle extreme temperature differences', () => {
+      const result = (service as any).performEnergyCalculation({
+        indoorTemp: 20.0,
+        outdoorTemp: -20.0,
+        durationSeconds: 3600,
+      });
+
+      expect(result.deltaT).toBe(40.0);
+      expect(result.energyLossWatts).toBe(280.0);
+      expect(result.costEuros).toBe(0.0487);
+      expect(result.co2EmissionsGrams).toBe(15.68);
+    });
+
+    it('should handle very small temperature difference with precision', () => {
+      const result = (service as any).performEnergyCalculation({
+        indoorTemp: 20.12,
+        outdoorTemp: 20.11,
+        durationSeconds: 60,
+      });
+
+      expect(result.deltaT).toBe(0.01);
+      expect(result.energyLossWatts).toBe(0.0);
+      expect(result.costEuros).toBe(0.0);
+      expect(result.co2EmissionsGrams).toBe(0.0);
+    });
+  });
+
+  describe('cache weather data handling', () => {
+    const validInput: EnergyCalculationInput = {
+      doorStateId: 1,
+      durationSeconds: 60,
+      timestamp: new Date('2024-01-20T14:30:00.000Z'),
+    };
+
+    const mockDoorState = {
+      id: 1,
+      isOpen: true,
+      timestamp: new Date('2024-01-20T14:29:00.000Z'),
+    } as DoorState;
+
+    beforeEach(() => {
+      ruuviParser.getAverageIndoorTemperature.mockReturnValue(21.25);
+      doorStateRepository.findOne.mockResolvedValue(mockDoorState);
+      energyMetricRepository.create.mockReturnValue({} as any);
+      energyMetricRepository.save.mockResolvedValue({ id: 1 } as any);
+    });
+
+    it('should handle cached weather data correctly', async () => {
+      const cachedWeatherData = {
+        temperature: 5.75,
+        source: 'cache' as const,
+        timestamp: new Date('2024-01-20T14:30:00.000Z'),
+      };
+      weatherService.getOutdoorTemperature.mockResolvedValue(cachedWeatherData);
+
+      await service.calculateEnergyLoss(validInput);
+
+      expect(energyMetricRepository.create).toHaveBeenCalled();
+      expect(energyMetricRepository.save).toHaveBeenCalled();
+      expect(webSocketGateway.emit).toHaveBeenCalled();
+    });
+
+    it('should verify gamification service call with correct parameters', async () => {
+      weatherService.getOutdoorTemperature.mockResolvedValue({
+        temperature: 10.0,
+        source: 'api' as const,
+        timestamp: new Date(),
+      });
+
+      await service.calculateEnergyLoss(validInput);
+
+      expect(gamificationService.handleEnergyMetricCreated).toHaveBeenCalledWith(1, 1);
     });
   });
 });

@@ -191,7 +191,7 @@ describe('DashboardController', () => {
       const openingTime = new Date(Date.now() - 300000); // 5 minutes ago
       doorService.currentDoorState = {
         isOpen: true,
-        timestamp: openingTime,
+        openedAt: openingTime,
       } as any;
 
       // Act

@@ -112,8 +112,8 @@ describe('MqttService', () => {
       const connectHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'connect')[1];
       connectHandler();
 
-      expect(mockMqttClient.subscribe).toHaveBeenCalledWith('test/door', expect.any(Function));
-      expect(mockMqttClient.subscribe).toHaveBeenCalledWith('test/ruuvi/+', expect.any(Function));
+      expect(mockMqttClient.subscribe).toHaveBeenCalledWith('test/door', { qos: 1 }, expect.any(Function));
+      expect(mockMqttClient.subscribe).toHaveBeenCalledWith('test/ruuvi/+', { qos: 1 }, expect.any(Function));
     });
   });
 
@@ -150,7 +150,8 @@ describe('MqttService', () => {
       // Simulate receiving a message
       const messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
       const testPayload = Buffer.from('{"test": "data"}');
-      messageHandler('test/door', testPayload);
+      const mockPacket = { retain: false };
+      messageHandler('test/door', testPayload, mockPacket);
 
       expect(handler1).toHaveBeenCalledWith('test/door', testPayload);
       expect(handler2).toHaveBeenCalledWith('test/door', testPayload);
@@ -166,7 +167,8 @@ describe('MqttService', () => {
       // Simulate receiving a message with wildcard match
       const messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
       const testPayload = Buffer.from('{"sensor": "data"}');
-      messageHandler('test/ruuvi/12345', testPayload);
+      const mockPacket = { retain: false };
+      messageHandler('test/ruuvi/12345', testPayload, mockPacket);
 
       expect(handler).toHaveBeenCalledWith('test/ruuvi/12345', testPayload);
     });
@@ -185,9 +187,10 @@ describe('MqttService', () => {
       // Simulate receiving a message
       const messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
       const testPayload = Buffer.from('test');
+      const mockPacket = { retain: false };
 
       // Should not throw, and working handler should still be called
-      expect(() => messageHandler('test/topic', testPayload)).not.toThrow();
+      expect(() => messageHandler('test/topic', testPayload, mockPacket)).not.toThrow();
       expect(workingHandler).toHaveBeenCalledWith('test/topic', testPayload);
     });
   });
@@ -243,12 +246,13 @@ describe('MqttService', () => {
       await service.onModuleInit();
 
       const messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
+      const mockPacket = { retain: false };
 
-      messageHandler('exact/topic', Buffer.from('test'));
+      messageHandler('exact/topic', Buffer.from('test'), mockPacket);
       expect(handler).toHaveBeenCalled();
 
       handler.mockClear();
-      messageHandler('different/topic', Buffer.from('test'));
+      messageHandler('different/topic', Buffer.from('test'), mockPacket);
       expect(handler).not.toHaveBeenCalled();
     });
 
@@ -260,16 +264,17 @@ describe('MqttService', () => {
       await service.onModuleInit();
 
       const messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
+      const mockPacket = { retain: false };
 
-      messageHandler('sensor/123/data', Buffer.from('test'));
+      messageHandler('sensor/123/data', Buffer.from('test'), mockPacket);
       expect(handler).toHaveBeenCalled();
 
       handler.mockClear();
-      messageHandler('sensor/456/data', Buffer.from('test'));
+      messageHandler('sensor/456/data', Buffer.from('test'), mockPacket);
       expect(handler).toHaveBeenCalled();
 
       handler.mockClear();
-      messageHandler('sensor/123/other', Buffer.from('test'));
+      messageHandler('sensor/123/other', Buffer.from('test'), mockPacket);
       expect(handler).not.toHaveBeenCalled();
     });
   });

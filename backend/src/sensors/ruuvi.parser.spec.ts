@@ -5,6 +5,7 @@ import { RuuviParser } from './ruuvi.parser';
 import { SensorReading } from '../shared/entities/sensor-reading.entity';
 import { MqttService } from '../mqtt/mqtt.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
+import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
 import { mockService } from '../shared/testing/mockers';
 
 describe('RuuviParser', () => {
@@ -38,6 +39,9 @@ describe('RuuviParser', () => {
         },
         mockService(MqttService, mockMqttService),
         mockService(ConfigurationService, mockConfigService),
+        mockService(EcoWebSocketGateway, {
+          emitSensorDataUpdated: jest.fn(),
+        }),
       ],
     }).compile();
 
