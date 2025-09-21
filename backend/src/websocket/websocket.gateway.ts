@@ -1,6 +1,8 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { BadgeType } from '../shared/enums/badge-type.enum';
+import { UserLevel } from '../shared/enums/user-level.enum';
 
 @WebSocketGateway({
   cors: {
@@ -41,5 +43,35 @@ export class EcoWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
       timestamp: new Date()
     };
     this.emit('sensor-data-updated', payload);
+  }
+
+  emitPointsAwarded(userId: number, pointsAwarded: Array<{points: number, reason: string}>, newTotal: number): void {
+    const payload = {
+      userId,
+      pointsAwarded,
+      newTotal,
+      timestamp: new Date()
+    };
+    this.emit('points-awarded', payload);
+  }
+
+  emitBadgeAwarded(userId: number, badgeType: BadgeType, description: string): void {
+    const payload = {
+      userId,
+      badgeType,
+      description,
+      earnedAt: new Date()
+    };
+    this.emit('badge-awarded', payload);
+  }
+
+  emitLevelUp(userId: number, oldLevel: UserLevel, newLevel: UserLevel): void {
+    const payload = {
+      userId,
+      oldLevel,
+      newLevel,
+      timestamp: new Date()
+    };
+    this.emit('level-up', payload);
   }
 }

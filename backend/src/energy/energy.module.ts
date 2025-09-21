@@ -4,6 +4,7 @@ import { EnergyMetric, DoorState } from '../shared/entities';
 import { SensorsModule } from '../sensors/sensors.module';
 import { ConfigurationModule } from '../shared/config/config.module';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { GamificationModule } from '../gamification/gamification.module';
 import { EnergyService } from './energy.service';
 import { WeatherService } from './weather.service';
 
@@ -11,6 +12,7 @@ import { WeatherService } from './weather.service';
   imports: [
     TypeOrmModule.forFeature([EnergyMetric, DoorState]),
     forwardRef(() => SensorsModule),
+    forwardRef(() => GamificationModule),
     ConfigurationModule,
     WebSocketModule,
   ],

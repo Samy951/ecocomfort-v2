@@ -33,6 +33,12 @@ export class User {
   @Column({ type: 'enum', enum: UserLevel, default: UserLevel.BRONZE })
   level: UserLevel;
 
+  @Column({ default: 0 })
+  dailyStreak: number;
+
+  @Column({ default: 0 })
+  quickCloseCount: number;
+
   @OneToMany(() => UserBadge, badge => badge.user)
   badges: UserBadge[];
 

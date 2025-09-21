@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DoorState } from '../shared/entities/door-state.entity';
@@ -6,6 +6,7 @@ import { MqttService } from '../mqtt/mqtt.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
 import { EnergyService } from '../energy/energy.service';
 import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
+import { GamificationService } from '../gamification/gamification.service';
 
 interface DoorCurrentState {
   isOpen: boolean;
@@ -25,6 +26,8 @@ export class DoorService implements OnModuleInit {
     private configService: ConfigurationService,
     private energyService: EnergyService,
     private webSocketGateway: EcoWebSocketGateway,
+    @Inject(forwardRef(() => GamificationService))
+    private gamificationService: GamificationService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -129,5 +132,8 @@ export class DoorService implements OnModuleInit {
       durationSeconds,
       timestamp: closedAt,
     });
+
+    // Trigger gamification check (assume userId = 1 for mono-user app)
+    await this.gamificationService.handleDoorClosed(1, durationSeconds);
   }
 }

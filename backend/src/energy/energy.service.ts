@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EnergyMetric } from '../shared/entities/energy-metric.entity';
@@ -7,6 +7,7 @@ import { RuuviParser } from '../sensors/ruuvi.parser';
 import { WeatherService } from './weather.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
 import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
+import { GamificationService } from '../gamification/gamification.service';
 
 export interface EnergyCalculationInput {
   doorStateId: number;
@@ -44,6 +45,8 @@ export class EnergyService {
     private weatherService: WeatherService,
     private configService: ConfigurationService,
     private webSocketGateway: EcoWebSocketGateway,
+    @Inject(forwardRef(() => GamificationService))
+    private gamificationService: GamificationService,
   ) {}
 
   async calculateEnergyLoss(input: EnergyCalculationInput): Promise<void> {
@@ -98,7 +101,7 @@ export class EnergyService {
         timestamp: input.timestamp,
       });
 
-      await this.energyMetricRepository.save(energyMetric);
+      const savedMetric = await this.energyMetricRepository.save(energyMetric);
 
       this.logger.log(
         `Energy calculated for doorStateId ${input.doorStateId}: ` +
@@ -115,6 +118,9 @@ export class EnergyService {
       };
 
       this.webSocketGateway.emit('energy_metric_created', event);
+
+      // Trigger gamification check (assume userId = 1 for mono-user app)
+      await this.gamificationService.handleEnergyMetricCreated(1, savedMetric.id);
 
     } catch (error) {
       this.logger.error(`Failed to calculate energy loss for doorStateId ${input.doorStateId}: ${error.message}`);
