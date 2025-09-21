@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { DoorState } from '../shared/entities/door-state.entity';
 import { MqttService } from '../mqtt/mqtt.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
+import { EnergyService } from '../energy/energy.service';
 
 interface DoorCurrentState {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export class DoorService implements OnModuleInit {
     private doorStateRepository: Repository<DoorState>,
     private mqttService: MqttService,
     private configService: ConfigurationService,
+    private energyService: EnergyService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -115,5 +117,12 @@ export class DoorService implements OnModuleInit {
     );
 
     this.logger.log(`Door was open for ${durationSeconds} seconds`);
+
+    // Trigger energy calculation
+    await this.energyService.calculateEnergyLoss({
+      doorStateId: this.currentState.lastDoorStateId,
+      durationSeconds,
+      timestamp: closedAt,
+    });
   }
 }

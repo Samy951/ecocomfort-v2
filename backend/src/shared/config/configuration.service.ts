@@ -42,6 +42,7 @@ export class ConfigurationService {
         doorSurfaceM2: z.number().default(2.0),
         thermalCoefficientU: z.number().default(3.5),
         energyCostPerKwh: z.number().default(0.174),
+        co2EmissionsPerKwh: z.number().default(56),
       }),
     });
 
@@ -68,6 +69,7 @@ export class ConfigurationService {
         doorSurfaceM2: parseFloat(this.nestConfigService.get<string>('DOOR_SURFACE_M2') ?? '2.0'),
         thermalCoefficientU: parseFloat(this.nestConfigService.get<string>('THERMAL_COEFFICIENT_U') ?? '3.5'),
         energyCostPerKwh: parseFloat(this.nestConfigService.get<string>('ENERGY_COST_PER_KWH') ?? '0.174'),
+        co2EmissionsPerKwh: parseFloat(this.nestConfigService.get<string>('CO2_EMISSIONS_PER_KWH') ?? '56'),
       },
     };
 

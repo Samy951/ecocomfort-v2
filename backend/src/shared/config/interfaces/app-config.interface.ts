@@ -32,4 +32,5 @@ export interface EnergyConfig {
   doorSurfaceM2: number;
   thermalCoefficientU: number;
   energyCostPerKwh: number;
+  co2EmissionsPerKwh: number;
 }

@@ -37,6 +37,9 @@ export class EnergyMetric {
   @Column('decimal', { precision: 5, scale: 2 })
   deltaT: number;
 
+  @Column('decimal', { precision: 10, scale: 2 })
+  co2EmissionsGrams: number;
+
   @Column()
   durationSeconds: number;
 
