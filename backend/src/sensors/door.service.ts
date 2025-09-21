@@ -5,6 +5,7 @@ import { DoorState } from '../shared/entities/door-state.entity';
 import { MqttService } from '../mqtt/mqtt.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
 import { EnergyService } from '../energy/energy.service';
+import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
 
 interface DoorCurrentState {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export class DoorService implements OnModuleInit {
     private mqttService: MqttService,
     private configService: ConfigurationService,
     private energyService: EnergyService,
+    private webSocketGateway: EcoWebSocketGateway,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -64,6 +66,9 @@ export class DoorService implements OnModuleInit {
       }
 
       this.logger.log(`Door state changed to: ${isOpen ? 'OPEN' : 'CLOSED'}`);
+
+      // Emit WebSocket event after successful database update
+      this.webSocketGateway.emitDoorStateChanged(isOpen);
     } catch (error) {
       this.logger.error(`Failed to process door state change: ${error.message}`);
     }

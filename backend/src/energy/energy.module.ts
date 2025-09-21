@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EnergyMetric, DoorState } from '../shared/entities';
 import { SensorsModule } from '../sensors/sensors.module';
@@ -10,7 +10,7 @@ import { WeatherService } from './weather.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([EnergyMetric, DoorState]),
-    SensorsModule,
+    forwardRef(() => SensorsModule),
     ConfigurationModule,
     WebSocketModule,
   ],

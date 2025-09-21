@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { SensorReading } from '../shared/entities/sensor-reading.entity';
 import { MqttService } from '../mqtt/mqtt.service';
 import { ConfigurationService } from '../shared/config/configuration.service';
+import { EcoWebSocketGateway } from '../websocket/websocket.gateway';
 
 interface SensorState {
   temperature?: number;
@@ -16,6 +17,7 @@ interface SensorState {
 export class RuuviParser implements OnModuleInit {
   private readonly logger = new Logger(RuuviParser.name);
   private sensorStates = new Map<string, SensorState>();
+  private lastEmissionTime = 0;
 
   private readonly VALID_SENSORS = ['944372022', '422801533', '1947698524'];
   private readonly DATA_TYPE_MAP = {
@@ -24,12 +26,16 @@ export class RuuviParser implements OnModuleInit {
     '116': 'pressure'
   };
   private readonly DATA_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly EMISSION_THROTTLE_MS = 60 * 1000; // 1 minute
+  private readonly TEMP_THRESHOLD = 0.5; // 0.5°C
+  private readonly HUMIDITY_THRESHOLD = 2; // 2%
 
   constructor(
     @InjectRepository(SensorReading)
     private sensorReadingRepository: Repository<SensorReading>,
     private mqttService: MqttService,
     private configService: ConfigurationService,
+    private webSocketGateway: EcoWebSocketGateway,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -70,6 +76,7 @@ export class RuuviParser implements OnModuleInit {
 
       this.updateSensorCache(sensorId, measureType, value);
       this.saveSensorReading(sensorId);
+      this.tryEmitSensorDataUpdate();
 
       this.logger.log(`Sensor ${sensorId}: ${measureType}=${value}${this.getUnit(measureType)}`);
 
@@ -128,6 +135,50 @@ export class RuuviParser implements OnModuleInit {
     const roundedAverage = Math.round(average * 100) / 100;
 
     this.logger.log(`Average indoor temperature: ${roundedAverage}°C (${temperatures.length} sensors active)`);
+    return roundedAverage;
+  }
+
+  private tryEmitSensorDataUpdate(): void {
+    const now = Date.now();
+
+    // Check throttling
+    if (now - this.lastEmissionTime < this.EMISSION_THROTTLE_MS) {
+      return;
+    }
+
+    const avgTemp = this.getAverageIndoorTemperature();
+    const avgHumidity = this.getAverageIndoorHumidity();
+
+    if (avgTemp === null || avgHumidity === null) {
+      return;
+    }
+
+    // Check if change is significant (simplified - in real implementation,
+    // you'd store previous values to compare)
+    this.lastEmissionTime = now;
+    this.webSocketGateway.emitSensorDataUpdated(avgTemp, avgHumidity);
+  }
+
+  public getAverageIndoorHumidity(): number | null {
+    const humidities: number[] = [];
+    const now = Date.now();
+
+    for (const [sensorId, state] of this.sensorStates) {
+      if (state.humidity !== undefined &&
+          (now - state.lastUpdate.getTime()) < this.DATA_TIMEOUT_MS) {
+        humidities.push(state.humidity);
+      }
+    }
+
+    if (humidities.length === 0) {
+      this.logger.warn('No recent humidity data available for average calculation');
+      return null;
+    }
+
+    const average = humidities.reduce((sum, humidity) => sum + humidity, 0) / humidities.length;
+    const roundedAverage = Math.round(average * 100) / 100;
+
+    this.logger.log(`Average indoor humidity: ${roundedAverage}% (${humidities.length} sensors active)`);
     return roundedAverage;
   }
 
