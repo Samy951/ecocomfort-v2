@@ -17,6 +17,7 @@ export class MqttService implements IMqttService, OnModuleInit, OnModuleDestroy 
   private client: MqttClient | null = null;
   private messageHandlers = new Map<string, Set<MessageHandler>>();
   private reconnectAttempts = 0;
+  private messageStats = new Map<string, number>();
 
   constructor(private configService: ConfigurationService) {}
 
@@ -62,13 +63,36 @@ export class MqttService implements IMqttService, OnModuleInit, OnModuleDestroy 
       });
 
       this.client.on('message', (topic, payload, packet) => {
-        // Log if this is a retained message
-        if (packet.retain) {
-          this.logger.log(`Received RETAINED message on ${topic}: ${payload.toString().slice(0, 100)}`);
+        const now = new Date();
+        const timestamp = now.toISOString();
+        const fullPayload = payload.toString();
+
+        // Update message statistics
+        const count = this.messageStats.get(topic) || 0;
+        this.messageStats.set(topic, count + 1);
+
+        // Enhanced debug logging
+        if (process.env.LOG_LEVEL === 'debug') {
+          this.logger.debug(`[${timestamp}] Topic: ${topic}`);
+          this.logger.debug(`[${timestamp}] Payload: ${fullPayload}`);
+          this.logger.debug(`[${timestamp}] Retained: ${packet.retain}`);
+          this.logger.debug(`[${timestamp}] Message count for topic: ${this.messageStats.get(topic)}`);
         } else {
-          this.logger.log(`Received message on ${topic}: ${payload.toString().slice(0, 100)}`);
+          // Standard logging
+          if (packet.retain) {
+            this.logger.log(`Received RETAINED message on ${topic}: ${fullPayload.slice(0, 100)}`);
+          } else {
+            this.logger.log(`Received message on ${topic}: ${fullPayload.slice(0, 100)}`);
+          }
         }
+
+        const startTime = Date.now();
         this.distributeMessage(topic, payload);
+        const processingTime = Date.now() - startTime;
+
+        if (process.env.LOG_LEVEL === 'debug') {
+          this.logger.debug(`[${timestamp}] Processing time: ${processingTime}ms`);
+        }
       });
 
     } catch (error) {

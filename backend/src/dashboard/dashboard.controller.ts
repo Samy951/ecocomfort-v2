@@ -9,7 +9,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import {
@@ -141,8 +141,8 @@ export class DashboardController {
 
     // Calculate current door open duration if door is open
     let doorOpenDuration = 0;
-    if (this.doorService.currentDoorState?.isOpen) {
-      const openingSince = this.doorService.currentDoorState.timestamp;
+    if (this.doorService.currentDoorState?.isOpen && this.doorService.currentDoorState?.openedAt) {
+      const openingSince = this.doorService.currentDoorState.openedAt;
       doorOpenDuration = Math.floor((Date.now() - openingSince.getTime()) / 1000);
     }
 

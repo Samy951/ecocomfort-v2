@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:users": "NODE_ENV=development ts-node src/shared/seeders/user.seeder.ts"
+    "seed:users": "NODE_ENV=development ts-node src/shared/seeders/user.seeder.ts",
+    "test:mqtt": "LOG_LEVEL=debug npm run start:dev",
+    "db:stats": "psql $DATABASE_URL -f scripts/mqtt-stats.sql"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.1",

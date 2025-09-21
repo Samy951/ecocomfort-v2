@@ -19,6 +19,10 @@ export class DoorService implements OnModuleInit {
   private readonly logger = new Logger(DoorService.name);
   private currentState: DoorCurrentState = { isOpen: false };
 
+  get currentDoorState(): DoorCurrentState {
+    return this.currentState;
+  }
+
   constructor(
     @InjectRepository(DoorState)
     private doorStateRepository: Repository<DoorState>,
