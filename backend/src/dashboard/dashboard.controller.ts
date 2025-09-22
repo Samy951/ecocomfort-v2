@@ -37,7 +37,7 @@ import {
 } from './dto/dashboard.dto';
 
 @ApiTags('Dashboard')
-@Controller('api')
+@Controller('dashboard')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class DashboardController {
@@ -67,9 +67,9 @@ export class DashboardController {
     const averageTemperature = this.ruuviParser.getAverageIndoorTemperature();
     const averageHumidity = this.ruuviParser.getAverageIndoorHumidity();
 
-    // Build individual sensor details for the 3 RuuviTag sensors
+    // Build sensor details grouped by physical sensor
     const sensorIds = ['944372022', '422801533', '1947698524'];
-    const sensors: SensorStatusDto[] = [];
+    const sensors: any[] = [];
 
     for (const sensorId of sensorIds) {
       const sensorData = this.ruuviParser.getSensorData(sensorId);
@@ -77,31 +77,25 @@ export class DashboardController {
         ? Date.now() - sensorData.lastUpdate.getTime() < 5 * 60 * 1000 // 5 minutes
         : false;
 
-      // Add temperature sensor
-      sensors.push({
-        sensorId,
-        type: 'temperature',
-        value: sensorData?.temperature || null,
-        lastUpdate: sensorData?.lastUpdate || null,
-        isOnline,
-      });
+      const hasUsableData = sensorData && (sensorData.temperature !== null || sensorData.humidity !== null);
 
-      // Add humidity sensor
+      // Create a grouped sensor object matching frontend expectations
       sensors.push({
-        sensorId,
-        type: 'humidity',
-        value: sensorData?.humidity || null,
-        lastUpdate: sensorData?.lastUpdate || null,
-        isOnline,
-      });
-
-      // Add pressure sensor
-      sensors.push({
-        sensorId,
-        type: 'pressure',
-        value: sensorData?.pressure || null,
-        lastUpdate: sensorData?.lastUpdate || null,
-        isOnline,
+        sensor_id: sensorId,
+        name: `Capteur ${sensorId.slice(-3)}`, // Use last 3 digits for display
+        room: {
+          name: 'Salle inconnue',
+          building_name: 'Bâtiment principal',
+        },
+        data: {
+          timestamp: sensorData?.lastUpdate?.toISOString() || new Date().toISOString(),
+          temperature: sensorData?.temperature || null,
+          humidity: sensorData?.humidity || null,
+          door_state: false,
+          energy_loss_watts: 0,
+        },
+        is_online: isOnline,
+        has_usable_data: hasUsableData,
       });
     }
 
@@ -124,6 +118,7 @@ export class DashboardController {
   async getCurrentEnergy(): Promise<CurrentEnergyDto> {
     // Get latest energy metric
     const latestMetric = await this.energyMetricRepository.findOne({
+      where: {},
       order: { timestamp: 'DESC' },
     });
 

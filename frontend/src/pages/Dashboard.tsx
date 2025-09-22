@@ -230,7 +230,7 @@ const Dashboard = ({
 
   const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
 
-  const activeSensors = sensors.filter((s) => s.isOnline).length;
+  const activeSensors = sensors.filter((s) => s.is_online).length;
   const totalSensors = sensors.length;
 
   return (

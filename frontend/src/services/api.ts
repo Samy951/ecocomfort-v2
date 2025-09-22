@@ -216,7 +216,7 @@ class ApiService {
   // Dashboard Overview
   async getDashboardOverview(): Promise<DashboardOverview> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<DashboardOverview>(`${prefix}/api/energy/daily`);
+    return this.makeRequest<DashboardOverview>(`${prefix}/dashboard/energy/daily`);
   }
 
   // Sensor Data
@@ -225,7 +225,7 @@ class ApiService {
     forceUnique?: number;
   }): Promise<CurrentSensorsResponse> {
     const prefix = this.getEndpointPrefix();
-    const url = `${prefix}/api/sensors`;
+    const url = `${prefix}/dashboard/sensors`;
 
     if (options?.bypassCache || options?.forceUnique) {
       // Add timestamp to bypass cache, use forceUnique if provided
@@ -263,7 +263,7 @@ class ApiService {
   // Energy Analytics
   async getEnergyAnalytics(days: number = 7): Promise<EnergyAnalytics> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<EnergyAnalytics>(`${prefix}/api/energy/current`);
+    return this.makeRequest<EnergyAnalytics>(`${prefix}/dashboard/energy/current`);
   }
 
   // Room Details
