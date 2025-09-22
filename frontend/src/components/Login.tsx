@@ -60,15 +60,33 @@ export default function Login({
   };
 
   const handleDemoLogin = async () => {
-    setFormData({
-      email: "admin@ecocomfort.com",
-      password: "Admin@123",
-    });
-    // Trigger form submission after a short delay to show the pre-filled data
-    setTimeout(() => {
-      const form = document.querySelector("form");
-      form?.requestSubmit();
-    }, 100);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiService.login(
+        "admin@ecocomfort.com",
+        "Admin@123"
+      );
+
+      if (response.token && response.user) {
+        // Store token and user data
+        apiService.setAuthToken(response.token);
+        localStorage.setItem("user_data", JSON.stringify(response.user));
+
+        // Call success callback
+        onLoginSuccess(response.token, response.user);
+      } else {
+        throw new Error("Réponse d'authentification invalide");
+      }
+    } catch (err: any) {
+      console.error("Demo login error:", err);
+      setError(
+        err.message || "Erreur de connexion admin. Vérifiez les credentials."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
