@@ -8,6 +8,12 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
 
   constructor() {
+    // WebSocket disabled for now - backend not implemented yet
+    // this.connect();
+  }
+
+  // Method to enable WebSocket when backend is ready
+  enable() {
     this.connect();
   }
 
