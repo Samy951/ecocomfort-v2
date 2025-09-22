@@ -55,6 +55,10 @@ function App() {
         level: 1, // TODO: Ajouter au backend
         organizationId: "", // TODO: Ajouter au backend
       });
+      
+      // Initialiser l'utilisateur avec le WebSocket
+      webSocketService.initializeUser(user.id, ""); // TODO: Ajouter organizationId au backend
+      
       // Try to fetch gamification data only (no need to fetch user profile again)
       fetchGamificationData();
     },
@@ -85,6 +89,10 @@ function App() {
             level: 1, // TODO: Ajouter au backend
             organizationId: "", // TODO: Ajouter au backend
           });
+          
+          // Initialiser l'utilisateur avec le WebSocket
+          webSocketService.initializeUser(user.id, ""); // TODO: Ajouter organizationId au backend
+          
           // Try to fetch gamification data
           fetchGamificationData();
         } catch (error) {

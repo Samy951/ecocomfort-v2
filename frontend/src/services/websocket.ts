@@ -1,55 +1,79 @@
-// Service WebSocket simplifié pour EcoComfort
+// Service WebSocket avec Socket.IO pour EcoComfort
+import { io, Socket } from 'socket.io-client';
 
 class WebSocketService {
-  private socket: WebSocket | null = null;
+  private socket: Socket | null = null;
   private isConnected = false;
   private subscribers: Map<string, Set<Function>> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
 
   constructor() {
-    // WebSocket disabled for now - backend not implemented yet
-    // this.connect();
-  }
-
-  // Method to enable WebSocket when backend is ready
-  enable() {
+    // WebSocket activé - backend Socket.IO disponible
     this.connect();
   }
 
   private connect() {
     try {
-      const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:3000/ws";
-      this.socket = new WebSocket(wsUrl);
+      // URL Socket.IO du backend
+      const socketUrl = import.meta.env.VITE_WS_URL || "http://localhost:3000";
+      
+      console.log("🔌 Tentative de connexion Socket.IO:", socketUrl);
+      
+      this.socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true
+      });
 
-      this.socket.onopen = () => {
-        console.log("🔌 WebSocket connecté");
+      this.socket.on('connect', () => {
+        console.log("🔌 Socket.IO connecté:", this.socket?.id);
         this.isConnected = true;
         this.reconnectAttempts = 0;
-        this.notifySubscribers("connected", {});
-      };
+        this.notifySubscribers("connected", { socketId: this.socket?.id });
+      });
 
-      this.socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.notifySubscribers(data.type, data);
-        } catch (error) {
-          console.error("Erreur parsing WebSocket message:", error);
-        }
-      };
-
-      this.socket.onclose = () => {
-        console.log("🔌 WebSocket déconnecté");
+      this.socket.on('disconnect', (reason) => {
+        console.log("🔌 Socket.IO déconnecté:", reason);
         this.isConnected = false;
-        this.notifySubscribers("disconnected", {});
+        this.notifySubscribers("disconnected", { reason });
         this.handleReconnect();
-      };
+      });
 
-      this.socket.onerror = (error) => {
-        console.error("Erreur WebSocket:", error);
-      };
+      this.socket.on('connect_error', (error) => {
+        console.error("❌ Erreur connexion Socket.IO:", error);
+        this.isConnected = false;
+        this.handleReconnect();
+      });
+
+      // Écouter les événements spécifiques du backend
+      this.socket.on('door-state-changed', (data) => {
+        console.log("🚪 État porte changé:", data);
+        this.notifySubscribers("door-state-changed", data);
+      });
+
+      this.socket.on('sensor-data-updated', (data) => {
+        console.log("📊 Données capteur mises à jour:", data);
+        this.notifySubscribers("sensor-data-updated", data);
+      });
+
+      this.socket.on('points-awarded', (data) => {
+        console.log("🏆 Points attribués:", data);
+        this.notifySubscribers("points-awarded", data);
+      });
+
+      this.socket.on('badge-awarded', (data) => {
+        console.log("🎖️ Badge attribué:", data);
+        this.notifySubscribers("badge-awarded", data);
+      });
+
+      this.socket.on('level-up', (data) => {
+        console.log("⬆️ Montée de niveau:", data);
+        this.notifySubscribers("level-up", data);
+      });
+
     } catch (error) {
-      console.error("Erreur connexion WebSocket:", error);
+      console.error("Erreur connexion Socket.IO:", error);
       this.handleReconnect();
     }
   }
@@ -65,6 +89,8 @@ class WebSocketService {
         );
         this.connect();
       }, delay);
+    } else {
+      console.warn("⚠️ Nombre maximum de tentatives de reconnexion atteint");
     }
   }
 
@@ -102,7 +128,9 @@ class WebSocketService {
 
   public emit(eventType: string, data: any) {
     if (this.socket && this.isConnected) {
-      this.socket.send(JSON.stringify({ type: eventType, data }));
+      this.socket.emit(eventType, data);
+    } else {
+      console.warn("⚠️ Socket.IO non connecté, impossible d'émettre:", eventType);
     }
   }
 
@@ -116,7 +144,7 @@ class WebSocketService {
 
   public disconnect() {
     if (this.socket) {
-      this.socket.close();
+      this.socket.disconnect();
       this.socket = null;
     }
     this.isConnected = false;
@@ -125,6 +153,10 @@ class WebSocketService {
 
   public getConnectionStatus(): boolean {
     return this.isConnected;
+  }
+
+  public getSocketId(): string | undefined {
+    return this.socket?.id;
   }
 }
 

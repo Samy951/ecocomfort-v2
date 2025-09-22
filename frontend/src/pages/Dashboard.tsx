@@ -143,7 +143,7 @@ const Dashboard = ({
     });
 
     const unsubscribeDoorState = webSocketService.on(
-      "door-state-certainty-changed",
+      "door-state-changed",
       (event: any) => {
         console.log("🚪 Door state changed:", event);
         loadAllData();
@@ -158,11 +158,29 @@ const Dashboard = ({
       }
     );
 
+    const unsubscribePointsAwarded = webSocketService.on(
+      "points-awarded",
+      (event: any) => {
+        console.log("🏆 Points awarded:", event);
+        // TODO: Mettre à jour les points utilisateur
+      }
+    );
+
+    const unsubscribeLevelUp = webSocketService.on(
+      "level-up",
+      (event: any) => {
+        console.log("⬆️ Level up:", event);
+        // TODO: Mettre à jour le niveau utilisateur
+      }
+    );
+
     return () => {
       unsubscribeConnected();
       unsubscribeDisconnected();
       unsubscribeDoorState();
       unsubscribeSensorData();
+      unsubscribePointsAwarded();
+      unsubscribeLevelUp();
     };
   }, [setIsConnected, loadAllData]);
 
