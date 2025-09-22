@@ -1,4 +1,4 @@
-// Script ULTRA agressif pour supprimer le service worker
+// Script ULTRA AGRESSIF pour supprimer le service worker
 console.log('🚫 SUPPRESSION FORCÉE DU SERVICE WORKER...');
 
 // 1. Désactiver tous les service workers IMMÉDIATEMENT
@@ -67,6 +67,22 @@ try {
   console.log('✅ Cache localStorage nettoyé');
 } catch (error) {
   console.error('❌ Erreur lors du nettoyage localStorage:', error);
+}
+
+// 7. SUPPRIMER LE SCRIPT WORKBOX DU DOM
+const workboxScripts = document.querySelectorAll('script[src*="workbox"]');
+workboxScripts.forEach(script => {
+  script.remove();
+  console.log('✅ Script Workbox supprimé du DOM');
+});
+
+// 8. FORCER LA SUPPRESSION DU SCRIPT ACTUEL
+const currentScript = document.currentScript;
+if (currentScript) {
+  setTimeout(() => {
+    currentScript.remove();
+    console.log('✅ Script de nettoyage supprimé');
+  }, 5000);
 }
 
 console.log('🎉 Service Worker et cache NETTOYÉS !');

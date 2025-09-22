@@ -114,7 +114,7 @@ const Dashboard = ({
 
       return () => clearInterval(interval);
     }
-  }, [loadAllData, currentSensors.length, currentEnergy, dailyReport]);
+  }, [loadAllData, currentSensors?.length || 0, currentEnergy, dailyReport]);
 
   useEffect(() => {
     const unsubscribeConnected = webSocketService.on("connected", () => {
