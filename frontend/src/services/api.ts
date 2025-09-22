@@ -446,15 +446,6 @@ class ApiService {
     this.clearAuthToken();
   }
 
-  async getUserProfile(): Promise<{ id: string; name: string; email: string }> {
-    const response = await this.makeRequest<{
-      id: string;
-      name: string;
-      email: string;
-    }>("/auth/user");
-    return response;
-  }
-
   // Health check
   async healthCheck(): Promise<boolean> {
     try {

@@ -23,6 +23,36 @@ function App() {
     organizationId: string;
   } | null>(null);
 
+  const fetchGamificationData = useCallback(async () => {
+    try {
+      // Try to fetch gamification data
+      const gamificationData = await apiService.getGamificationData();
+      setGamification({
+        current_level: 1, // Convert string level to number
+        next_level: 2, // Default next level
+        total_points: gamificationData.points || 0,
+        points_for_current: 0,
+        points_for_next: 100,
+        points_to_next: 100,
+        progress_percent: 0,
+        is_max_level: false,
+      });
+    } catch (gamificationError) {
+      console.warn("Failed to fetch gamification data:", gamificationError);
+      // Set default gamification data
+      setGamification({
+        current_level: 1, // Default level as number
+        next_level: 2,
+        total_points: 0,
+        points_for_current: 0,
+        points_for_next: 100,
+        points_to_next: 100,
+        progress_percent: 0,
+        is_max_level: false,
+      });
+    }
+  }, []);
+
   const handleAuthSuccess = useCallback(
     (token: string, user: { id: string; name: string; email: string }) => {
       apiService.setAuthToken(token);
@@ -33,10 +63,10 @@ function App() {
         level: 1, // Default level
         organizationId: "1", // Default organization ID
       });
-      // Reload user profile and gamification data after successful login
-      fetchUserProfileAndGamification();
+      // Try to fetch gamification data only (no need to fetch user profile again)
+      fetchGamificationData();
     },
-    []
+    [fetchGamificationData]
   );
 
   const handleLogout = useCallback(() => {
@@ -46,82 +76,21 @@ function App() {
     setGamification(null);
   }, []);
 
-  const fetchUserProfileAndGamification = useCallback(async () => {
-    try {
-      // Try to fetch user profile to validate token
-      const userData = await apiService.getUserProfile();
-
-      setCurrentUser({
-        id: userData.id,
-        name: userData.name,
-        points: (userData as any).points || 0,
-        level: 1, // Default level as number
-        organizationId: (userData as any).organization_id || "1",
-      });
-
-      // Try to fetch gamification data
-      try {
-        const gamificationData = await apiService.getGamificationData();
-        setGamification({
-          current_level: 1, // Convert string level to number
-          next_level: 2, // Default next level
-          total_points:
-            gamificationData.points || (userData as any).points || 0,
-          points_for_current: 0,
-          points_for_next: 100,
-          points_to_next: 100,
-          progress_percent: 0,
-          is_max_level: false,
-        });
-      } catch (gamificationError) {
-        console.warn("Failed to fetch gamification data:", gamificationError);
-        // Set default gamification data
-        setGamification({
-          current_level: 1, // Default level as number
-          next_level: 2,
-          total_points: (userData as any).points || 0,
-          points_for_current: 0,
-          points_for_next: 100,
-          points_to_next: 100,
-          progress_percent: 0,
-          is_max_level: false,
-        });
-      }
-
-      // Initialize WebSocket with user data
-      webSocketService.initializeUser(
-        userData.id,
-        (userData as any).organization_id || "1"
-      );
-
-      // Subscribe to connection events
-      const unsubscribeConnected = webSocketService.on("connected", () => {
-        setIsConnected(true);
-      });
-
-      const unsubscribeDisconnected = webSocketService.on(
-        "disconnected",
-        () => {
-          setIsConnected(false);
-        }
-      );
-
-      return () => {
-        unsubscribeConnected();
-        unsubscribeDisconnected();
-      };
-    } catch (error) {
-      console.error("Authentication failed:", error);
-      apiService.clearAuthToken();
-      setCurrentUser(null);
-    }
-  }, []);
-
   useEffect(() => {
-    if (localStorage.getItem("auth_token")) {
-      fetchUserProfileAndGamification();
-    }
-  }, [fetchUserProfileAndGamification]);
+    // Initialize WebSocket connection
+    const unsubscribeConnected = webSocketService.on("connected", () => {
+      setIsConnected(true);
+    });
+
+    const unsubscribeDisconnected = webSocketService.on("disconnected", () => {
+      setIsConnected(false);
+    });
+
+    return () => {
+      unsubscribeConnected();
+      unsubscribeDisconnected();
+    };
+  }, []);
 
   if (!currentUser) {
     return <AuthWrapper onAuthSuccess={handleAuthSuccess} />;
