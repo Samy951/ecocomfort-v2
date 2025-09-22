@@ -238,10 +238,37 @@ const Dashboard = ({
   const averageTemperature = currentSensors?.averageTemperature || 0;
   const doorsOpenCount = currentSensors?.doorOpen ? 1 : 0;
 
-  const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
+  const totalEnergyLoss = Number(currentEnergy?.currentLossWatts) || 0;
 
-  const activeSensors = sensors.filter((s) => s.isOnline).length;
-  const totalSensors = sensors.length;
+  // Group sensors by sensorId to combine temperature and humidity data
+  const groupedSensors = sensors.reduce((acc, sensor) => {
+    const existingSensor = acc.find(s => s.sensorId === sensor.sensorId);
+    if (existingSensor) {
+      if (sensor.type === "temperature") {
+        existingSensor.temperature = sensor.value;
+      } else if (sensor.type === "humidity") {
+        existingSensor.humidity = sensor.value;
+      }
+    } else {
+      acc.push({
+        sensorId: sensor.sensorId,
+        isOnline: sensor.isOnline,
+        lastUpdate: sensor.lastUpdate,
+        temperature: sensor.type === "temperature" ? sensor.value : null,
+        humidity: sensor.type === "humidity" ? sensor.value : null,
+      });
+    }
+    return acc;
+  }, [] as Array<{
+    sensorId: string;
+    isOnline: boolean;
+    lastUpdate: Date | null;
+    temperature: number | null;
+    humidity: number | null;
+  }>);
+
+  const activeSensors = groupedSensors.filter((s) => s.isOnline).length;
+  const totalSensors = groupedSensors.length;
 
   return (
     <div className="space-y-6">
@@ -403,10 +430,10 @@ const Dashboard = ({
         </Typography>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sensors.length > 0 ? (
-            sensors.map((sensor, index: number) => (
+          {groupedSensors.length > 0 ? (
+            groupedSensors.map((sensor, index: number) => (
               <Card
-                key={`${sensor.sensorId}-${sensor.type}-${index}`}
+                key={`${sensor.sensorId}-${index}`}
                 variant="glass"
                 padding="md"
                 className={`${!sensor.isOnline ? "opacity-60" : ""}`}
@@ -417,7 +444,7 @@ const Dashboard = ({
                       {sensor.sensorId}
                     </Typography>
                     <Typography variant="paragraph-small" color="medium-grey">
-                      {sensor.type || "Type inconnu"}
+                      RuuviTag
                     </Typography>
                   </div>
                   <div className="flex items-center gap-2">
@@ -437,19 +464,19 @@ const Dashboard = ({
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Thermometer className="w-4 h-4 text-main-green" />
                       <Typography variant="paragraph-small">
-                        Température: {sensor.value?.toFixed(1) || "N/A"}°C
+                        Température: {sensor.temperature?.toFixed(1) || "N/A"}°C
                       </Typography>
                     </div>
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Droplets className="w-4 h-4 text-info" />
                       <Typography variant="paragraph-small">
-                        Humidité: {sensor.value?.toFixed(1) || "N/A"}%
+                        Humidité: {sensor.humidity?.toFixed(1) || "N/A"}%
                       </Typography>
                     </div>
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Zap className="w-4 h-4 text-warning" />
                       <Typography variant="paragraph-small">
-                        Perte Énergétique: {sensor.value?.toFixed(2) || "N/A"} W
+                        Perte Énergétique: {((sensor.temperature || 0) * 1.0).toFixed(2)} W
                       </Typography>
                     </div>
                   </div>

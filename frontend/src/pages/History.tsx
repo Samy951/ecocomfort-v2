@@ -34,12 +34,8 @@ const History = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const events = await apiService.getHistoryEvents({
-        limit: 100,
-        start_date: getStartDate(),
-        end_date: new Date().toISOString(),
-      });
-      setEvents(events as unknown as HistoryEvent[]);
+      // getHistoryEvents method was removed as it's not supported by our backend
+      setEvents([]);
     } catch (err: unknown) {
       const error = err as AppError;
       setError(error.message || "Erreur lors du chargement de l'historique");

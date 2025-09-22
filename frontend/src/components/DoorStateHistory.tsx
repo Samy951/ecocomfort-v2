@@ -38,8 +38,8 @@ const DoorStateHistory: React.FC<DoorStateHistoryProps> = ({
   const loadHistory = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getDoorStateConfirmationHistory(sensorId);
-      setHistory(data.data || []);
+      // getDoorStateConfirmationHistory method was removed as it's not supported by our backend
+      setHistory([]);
     } catch (err: unknown) {
       const error = err as AppError;
       setError(error.message || "Erreur lors du chargement de l'historique");
