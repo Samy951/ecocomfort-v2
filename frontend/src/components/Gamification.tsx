@@ -16,12 +16,11 @@ const Gamification: React.FC<GamificationProps> = ({
 }) => {
   const getLevelInfo = (level: number) => {
     if (level >= 50)
-      return { name: "Expert", icon: "🏆", color: "text-yellow-400" };
-    if (level >= 30)
-      return { name: "Avancé", icon: "🥇", color: "text-blue-400" };
+      return { name: "Expert", icon: "🏆", color: "text-warning" };
+    if (level >= 30) return { name: "Avancé", icon: "🥇", color: "text-info" };
     if (level >= 15)
-      return { name: "Intermédiaire", icon: "🥈", color: "text-green-400" };
-    return { name: "Débutant", icon: "🥉", color: "text-gray-400" };
+      return { name: "Intermédiaire", icon: "🥈", color: "text-success" };
+    return { name: "Débutant", icon: "🥉", color: "text-medium-grey" };
   };
 
   const levelInfo = getLevelInfo(userLevel?.current_level || 1);
@@ -31,7 +30,7 @@ const Gamification: React.FC<GamificationProps> = ({
     <Card variant="glass" padding="lg" className={className}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-400" />
+          <Trophy className="w-5 h-5 text-warning" />
           Gamification
         </h3>
         <div className="text-right">
@@ -84,7 +83,7 @@ const Gamification: React.FC<GamificationProps> = ({
           <div className="text-xs text-white/70">Niveau actuel</div>
         </div>
         <div className="text-center p-3 bg-white/5 rounded-lg">
-          <div className="text-lg font-bold text-blue-400">
+          <div className="text-lg font-bold text-info">
             {userLevel?.points_to_next || 100}
           </div>
           <div className="text-xs text-white/70">Points restants</div>
@@ -99,15 +98,15 @@ const Gamification: React.FC<GamificationProps> = ({
         </h4>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-white/70">
-            <Star className="w-4 h-4 text-yellow-400" />
+            <Star className="w-4 h-4 text-warning" />
             <span>Premier pas éco-responsable</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-white/70">
-            <Zap className="w-4 h-4 text-blue-400" />
+            <Zap className="w-4 h-4 text-info" />
             <span>Économie d'énergie détectée</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-white/70">
-            <Leaf className="w-4 h-4 text-green-400" />
+            <Leaf className="w-4 h-4 text-success" />
             <span>Contribution environnementale</span>
           </div>
         </div>

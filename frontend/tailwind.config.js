@@ -21,6 +21,10 @@ export default {
 
         // System Colors
         error: "#FF5A5A",
+        success: "#2FCE65", // main-green
+        warning: "#F59E0B", // amber-500 equivalent
+        info: "#3B82F6", // blue-500 equivalent
+        critical: "#EF4444", // red-500 equivalent
 
         // Extended Color Palette
         algae: {

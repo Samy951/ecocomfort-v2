@@ -117,21 +117,21 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
 
         {status === "checking" && (
           <div className="text-center py-4">
-            <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-2" />
+            <Loader2 className="w-8 h-8 text-info animate-spin mx-auto mb-2" />
             <div className="text-white/70">{message}</div>
           </div>
         )}
 
         {status === "calibrating" && (
           <div className="text-center py-4">
-            <Loader2 className="w-8 h-8 text-yellow-400 animate-spin mx-auto mb-2" />
+            <Loader2 className="w-8 h-8 text-warning animate-spin mx-auto mb-2" />
             <div className="text-white/70">{message}</div>
           </div>
         )}
 
         {status === "success" && (
           <div className="text-center py-4">
-            <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
+            <CheckCircle className="w-8 h-8 text-success mx-auto mb-2" />
             <div className="text-white font-medium mb-2">
               Calibration réussie !
             </div>
@@ -147,7 +147,7 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
 
         {status === "error" && (
           <div className="text-center py-4">
-            <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+            <AlertTriangle className="w-8 h-8 text-critical mx-auto mb-2" />
             <div className="text-white font-medium mb-2">
               Erreur de calibration
             </div>
@@ -155,7 +155,7 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={handleClose}
-                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex-1 bg-medium-grey text-main-white py-2 px-4 rounded-lg hover:bg-medium-grey/80 transition-colors"
               >
                 Fermer
               </button>

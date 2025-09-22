@@ -28,8 +28,14 @@ const Admin = () => {
     try {
       setLoading(true);
       const [sensorsData, overviewData] = await Promise.all([
-        apiService.getSensors(),
-        apiService.getDashboardOverview(),
+        apiService.getSensorData().catch((err) => {
+          console.warn("Failed to fetch sensor data:", err);
+          return { sensors: [] };
+        }),
+        apiService.getDashboardOverview().catch((err) => {
+          console.warn("Failed to fetch dashboard overview:", err);
+          return { infrastructure: { total_rooms: 0, total_buildings: 0 } };
+        }),
       ]);
 
       setStats({
@@ -50,8 +56,8 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-white mb-2">
+          <div className="w-16 h-16 border-4 border-info border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-2">
             Chargement de l'administration...
           </h2>
         </div>
@@ -62,15 +68,15 @@ const Admin = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center p-6 bg-red-900/50 rounded-lg border border-red-700">
-          <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-white mb-2">
+        <div className="text-center p-6 bg-critical/10 rounded-lg border border-critical/30">
+          <Shield className="w-16 h-16 text-critical mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-2">
             Erreur d'accès
           </h2>
-          <p className="text-red-200 mb-4">{error}</p>
+          <p className="text-critical/80 mb-4">{error}</p>
           <button
             onClick={loadAdminData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-info text-main-white rounded-lg hover:bg-info/80 transition-colors"
           >
             Réessayer
           </button>
@@ -80,14 +86,18 @@ const Admin = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6 text-white">
+    <div className="max-w-6xl mx-auto p-4 space-y-6 text-main-black dark:text-main-white">
       {/* Header */}
       <Card variant="glass" padding="lg">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-red-400" />
+          <Shield className="w-8 h-8 text-critical" />
           <div>
-            <h1 className="text-3xl font-bold text-white">Administration</h1>
-            <p className="text-white/70">Gestion du système EcoComfort</p>
+            <h1 className="text-3xl font-bold text-main-black dark:text-main-white">
+              Administration
+            </h1>
+            <p className="text-main-black/70 dark:text-main-white/70">
+              Gestion du système EcoComfort
+            </p>
           </div>
         </div>
       </Card>
@@ -95,35 +105,43 @@ const Admin = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card variant="glass" padding="lg" className="text-center">
-          <Building className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-white mb-2">
+          <Building className="w-8 h-8 text-info mx-auto mb-3" />
+          <div className="text-3xl font-bold text-main-black dark:text-main-white mb-2">
             {stats.totalBuildings}
           </div>
-          <div className="text-white/70">Bâtiments</div>
+          <div className="text-main-black/70 dark:text-main-white/70">
+            Bâtiments
+          </div>
         </Card>
 
         <Card variant="glass" padding="lg" className="text-center">
-          <DoorOpen className="w-8 h-8 text-green-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-white mb-2">
+          <DoorOpen className="w-8 h-8 text-success mx-auto mb-3" />
+          <div className="text-3xl font-bold text-main-black dark:text-main-white mb-2">
             {stats.totalRooms}
           </div>
-          <div className="text-white/70">Pièces</div>
+          <div className="text-main-black/70 dark:text-main-white/70">
+            Pièces
+          </div>
         </Card>
 
         <Card variant="glass" padding="lg" className="text-center">
-          <Wifi className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-white mb-2">
+          <Wifi className="w-8 h-8 text-warning mx-auto mb-3" />
+          <div className="text-3xl font-bold text-main-black dark:text-main-white mb-2">
             {stats.totalSensors}
           </div>
-          <div className="text-white/70">Capteurs totaux</div>
+          <div className="text-main-black/70 dark:text-main-white/70">
+            Capteurs totaux
+          </div>
         </Card>
 
         <Card variant="glass" padding="lg" className="text-center">
           <Settings className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-          <div className="text-3xl font-bold text-white mb-2">
+          <div className="text-3xl font-bold text-main-black dark:text-main-white mb-2">
             {stats.activeSensors}
           </div>
-          <div className="text-white/70">Capteurs actifs</div>
+          <div className="text-main-black/70 dark:text-main-white/70">
+            Capteurs actifs
+          </div>
         </Card>
       </div>
 
@@ -131,41 +149,49 @@ const Admin = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* System Status */}
         <Card variant="glass" padding="lg">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-blue-400" />
+          <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-info" />
             État du système
           </h2>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-white/70">API Backend</span>
+              <span className="text-main-black/70 dark:text-main-white/70">
+                API Backend
+              </span>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-green-400 text-sm">Connecté</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span className="text-success text-sm">Connecté</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-white/70">WebSocket</span>
+              <span className="text-main-black/70 dark:text-main-white/70">
+                WebSocket
+              </span>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-green-400 text-sm">Actif</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span className="text-success text-sm">Actif</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-white/70">Base de données</span>
+              <span className="text-main-black/70 dark:text-main-white/70">
+                Base de données
+              </span>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-green-400 text-sm">Opérationnelle</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span className="text-success text-sm">Opérationnelle</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-white/70">Capteurs IoT</span>
+              <span className="text-main-black/70 dark:text-main-white/70">
+                Capteurs IoT
+              </span>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-yellow-400 text-sm">
+                <div className="w-2 h-2 bg-warning rounded-full"></div>
+                <span className="text-warning text-sm">
                   {stats.activeSensors}/{stats.totalSensors} actifs
                 </span>
               </div>
@@ -175,30 +201,38 @@ const Admin = () => {
 
         {/* Quick Actions */}
         <Card variant="glass" padding="lg">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-green-400" />
+          <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-success" />
             Actions rapides
           </h2>
 
           <div className="space-y-3">
             <button className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-              <Settings className="w-5 h-5 text-blue-400" />
-              <span className="text-white">Configuration système</span>
+              <Settings className="w-5 h-5 text-info" />
+              <span className="text-main-black dark:text-main-white">
+                Configuration système
+              </span>
             </button>
 
             <button className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-              <Users className="w-5 h-5 text-green-400" />
-              <span className="text-white">Gestion utilisateurs</span>
+              <Users className="w-5 h-5 text-success" />
+              <span className="text-main-black dark:text-main-white">
+                Gestion utilisateurs
+              </span>
             </button>
 
             <button className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
               <Building className="w-5 h-5 text-purple-400" />
-              <span className="text-white">Gestion bâtiments</span>
+              <span className="text-main-black dark:text-main-white">
+                Gestion bâtiments
+              </span>
             </button>
 
             <button className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-              <Wifi className="w-5 h-5 text-yellow-400" />
-              <span className="text-white">Configuration capteurs</span>
+              <Wifi className="w-5 h-5 text-warning" />
+              <span className="text-main-black dark:text-main-white">
+                Configuration capteurs
+              </span>
             </button>
           </div>
         </Card>
@@ -206,15 +240,17 @@ const Admin = () => {
 
       {/* System Information */}
       <Card variant="glass" padding="lg">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-red-400" />
+        <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-critical" />
           Informations système
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-lg font-medium text-white mb-3">Version</h3>
-            <div className="space-y-2 text-white/70">
+            <h3 className="text-lg font-medium text-main-black dark:text-main-white mb-3">
+              Version
+            </h3>
+            <div className="space-y-2 text-main-black/70 dark:text-main-white/70">
               <div>EcoComfort MVP v1.0.0</div>
               <div>Frontend: React + TypeScript</div>
               <div>Backend: NestJS + PostgreSQL</div>
@@ -223,10 +259,10 @@ const Admin = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-medium text-white mb-3">
+            <h3 className="text-lg font-medium text-main-black dark:text-main-white mb-3">
               Endpoints utilisés
             </h3>
-            <div className="space-y-2 text-white/70 text-sm">
+            <div className="space-y-2 text-main-black/70 dark:text-main-white/70 text-sm">
               <div>• GET /api/dashboard/sensor-data</div>
               <div>• GET /api/dashboard/energy-analytics</div>
               <div>• GET /api/dashboard/overview</div>

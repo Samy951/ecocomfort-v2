@@ -65,29 +65,41 @@ const Dashboard = ({
     try {
       // Charger les données séparément pour éviter les conflits de types
       try {
-        const sensorsData = await apiService.getSensorData().catch(err => {
+        const sensorsData = await apiService.getSensorData().catch((err) => {
           console.warn("Failed to fetch sensor data:", err);
           return null;
         });
         if (sensorsData) setCurrentSensors(sensorsData);
 
-        const energyData = await apiService.getEnergyAnalytics(1).catch(err => {
-          console.warn("Failed to fetch energy data:", err);
-          return null;
-        });
+        const energyData = await apiService
+          .getEnergyAnalytics(1)
+          .catch((err) => {
+            console.warn("Failed to fetch energy data:", err);
+            // Retourner des données par défaut en cas d'erreur backend
+            return {
+              currentLossWatts: 0,
+              currentCostPerHour: 0,
+              doorOpenDuration: 0,
+              indoorTemp: 20,
+              outdoorTemp: 15,
+              timestamp: new Date(),
+            };
+          });
         if (energyData) setCurrentEnergy(energyData);
 
-        const dailyData = await apiService.getDashboardOverview().catch(err => {
-          console.warn("Failed to fetch dashboard overview:", err);
-          return null;
-        });
+        const dailyData = await apiService
+          .getDashboardOverview()
+          .catch((err) => {
+            console.warn("Failed to fetch dashboard overview:", err);
+            return null;
+          });
         if (dailyData) setDailyReport(dailyData);
 
         // Note: gamificationData sera géré par le composant parent (App.tsx)
       } catch (err: any) {
         console.warn("Error loading individual data:", err);
       }
-      
+
       setLastUpdate(new Date());
     } catch (err: any) {
       setError("Erreur lors du chargement des données");
@@ -103,14 +115,23 @@ const Dashboard = ({
 
   useEffect(() => {
     // Only start auto-refresh if we have some data loaded
-    if ((currentSensors?.sensors?.length || 0) > 0 || currentEnergy || dailyReport) {
+    if (
+      (currentSensors?.sensors?.length || 0) > 0 ||
+      currentEnergy ||
+      dailyReport
+    ) {
       const interval = setInterval(() => {
         loadAllData();
-      }, 60000); // Increased to 60 seconds to reduce API calls
+      }, 60000); // 1 minute interval
 
       return () => clearInterval(interval);
     }
-  }, [loadAllData, currentSensors?.sensors?.length || 0, currentEnergy, dailyReport]);
+  }, [
+    loadAllData,
+    currentSensors?.sensors?.length || 0,
+    currentEnergy,
+    dailyReport,
+  ]);
 
   useEffect(() => {
     const unsubscribeConnected = webSocketService.on("connected", () => {
@@ -268,7 +289,7 @@ const Dashboard = ({
               {totalEnergyLoss.toFixed(2)} W
             </Typography>
           </div>
-          <Zap className="w-8 h-8 text-yellow-400" />
+          <Zap className="w-8 h-8 text-warning" />
         </Card>
 
         <Card
@@ -284,7 +305,7 @@ const Dashboard = ({
               {activeSensors} / {totalSensors}
             </Typography>
           </div>
-          <Activity className="w-8 h-8 text-blue-400" />
+          <Activity className="w-8 h-8 text-info" />
         </Card>
       </div>
 
@@ -317,19 +338,19 @@ const Dashboard = ({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#101010",
+                  backgroundColor: "rgb(16, 16, 16)", // main-black
                   border: "none",
                   borderRadius: "8px",
                 }}
-                labelStyle={{ color: "#2FCE65" }}
-                itemStyle={{ color: "#FFFFFF" }}
+                labelStyle={{ color: "rgb(47, 206, 101)" }} // main-green
+                itemStyle={{ color: "rgb(255, 255, 255)" }} // main-white
               />
               <Area
                 yAxisId="left"
                 type="monotone"
                 dataKey="temperature"
-                stroke="#2FCE65"
-                fill="#2FCE65"
+                stroke="rgb(47, 206, 101)" // main-green
+                fill="rgb(47, 206, 101)" // main-green
                 fillOpacity={0.3}
                 name="Température (°C)"
               />
@@ -337,8 +358,8 @@ const Dashboard = ({
                 yAxisId="right"
                 type="monotone"
                 dataKey="energyLoss"
-                stroke="#F59E0B"
-                fill="#F59E0B"
+                stroke="rgb(245, 158, 11)" // amber-500 equivalent
+                fill="rgb(245, 158, 11)" // amber-500 equivalent
                 fillOpacity={0.2}
                 name="Perte Énergétique (W)"
               />
@@ -385,21 +406,21 @@ const Dashboard = ({
 
                 {sensor.has_usable_data ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-white">
+                    <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Thermometer className="w-4 h-4 text-main-green" />
                       <Typography variant="paragraph-small">
                         Température:{" "}
                         {sensor.data?.temperature?.toFixed(1) || "N/A"}°C
                       </Typography>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <Droplets className="w-4 h-4 text-blue-400" />
+                    <div className="flex items-center gap-2 text-main-black dark:text-main-white">
+                      <Droplets className="w-4 h-4 text-info" />
                       <Typography variant="paragraph-small">
                         Humidité: {sensor.data?.humidity?.toFixed(1) || "N/A"}%
                       </Typography>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <Zap className="w-4 h-4 text-yellow-400" />
+                    <div className="flex items-center gap-2 text-main-black dark:text-main-white">
+                      <Zap className="w-4 h-4 text-warning" />
                       <Typography variant="paragraph-small">
                         Perte Énergétique:{" "}
                         {sensor.data?.energy_loss_watts?.toFixed(2) || "N/A"} W
@@ -408,7 +429,7 @@ const Dashboard = ({
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                    <AlertTriangle className="w-8 h-8 text-warning mx-auto mb-2" />
                     <Typography variant="paragraph-small" color="medium-grey">
                       Pas de données utilisables pour ce capteur.
                     </Typography>
@@ -439,7 +460,7 @@ const Dashboard = ({
       )}
 
       {/* Footer */}
-      <div className="text-center text-white/50 text-sm">
+      <div className="text-center text-main-black/50 dark:text-main-white/50 text-sm">
         <Typography variant="paragraph-small">
           Dernière mise à jour: {lastUpdate.toLocaleString("fr-FR")}
         </Typography>

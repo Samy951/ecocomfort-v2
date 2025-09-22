@@ -26,6 +26,7 @@ interface NavigationProps {
   onToggleDarkMode: () => void;
   unreadNotifications?: number;
   onLogout?: () => void;
+  onNotificationsClick?: () => void;
 }
 
 const Navigation: React.FC<NavigationProps> = ({
@@ -36,6 +37,7 @@ const Navigation: React.FC<NavigationProps> = ({
   onToggleDarkMode,
   unreadNotifications = 0,
   onLogout,
+  onNotificationsClick,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -169,6 +171,7 @@ const Navigation: React.FC<NavigationProps> = ({
               size="small"
               className="w-full justify-start"
               icon={<Bell className="w-4 h-4" />}
+              onClick={onNotificationsClick}
             >
               Notifications
               {unreadNotifications > 0 && (
@@ -312,6 +315,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   size="small"
                   className="w-full justify-start"
                   icon={<Bell className="w-4 h-4" />}
+                  onClick={onNotificationsClick}
                 >
                   Notifications
                   {unreadNotifications > 0 && (

@@ -38,6 +38,12 @@ const Layout: React.FC<LayoutProps> = ({
     document.documentElement.classList.toggle("dark", newMode);
   };
 
+  const handleNotificationsClick = () => {
+    // TODO: Implémenter le système de notifications
+    console.log("Notifications clicked - système pas encore implémenté");
+    // Pour l'instant, juste un log
+  };
+
   return (
     <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
       {/* Background */}
@@ -52,6 +58,7 @@ const Layout: React.FC<LayoutProps> = ({
         onToggleDarkMode={toggleDarkMode}
         unreadNotifications={unreadNotifications}
         onLogout={onLogout}
+        onNotificationsClick={handleNotificationsClick}
       />
 
       {/* Main Content */}

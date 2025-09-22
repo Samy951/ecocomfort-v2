@@ -49,22 +49,22 @@ const DoorStateHistory: React.FC<DoorStateHistoryProps> = ({
   const getStateIcon = (state: string) => {
     switch (state) {
       case "closed":
-        return <DoorClosed className="w-4 h-4 text-green-400" />;
+        return <DoorClosed className="w-4 h-4 text-success" />;
       case "opened":
-        return <DoorOpen className="w-4 h-4 text-red-400" />;
+        return <DoorOpen className="w-4 h-4 text-critical" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-yellow-400" />;
+        return <AlertTriangle className="w-4 h-4 text-warning" />;
     }
   };
 
   const getStateColor = (state: string) => {
     switch (state) {
       case "closed":
-        return "text-green-400";
+        return "text-success";
       case "opened":
-        return "text-red-400";
+        return "text-critical";
       default:
-        return "text-yellow-400";
+        return "text-warning";
     }
   };
 
@@ -82,7 +82,7 @@ const DoorStateHistory: React.FC<DoorStateHistoryProps> = ({
     return (
       <Card variant="glass" padding="md" className={className}>
         <div className="text-center py-4">
-          <div className="text-red-400">{error}</div>
+          <div className="text-critical">{error}</div>
         </div>
       </Card>
     );
@@ -91,7 +91,7 @@ const DoorStateHistory: React.FC<DoorStateHistoryProps> = ({
   return (
     <Card variant="glass" padding="md" className={className}>
       <div className="flex items-center gap-2 mb-4">
-        <Clock className="w-5 h-5 text-blue-400" />
+        <Clock className="w-5 h-5 text-info" />
         <h3 className="text-lg font-semibold text-white">
           Historique des confirmations
         </h3>

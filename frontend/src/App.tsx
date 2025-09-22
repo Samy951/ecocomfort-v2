@@ -38,8 +38,7 @@ function App() {
         is_max_level: false, // TODO: Ajouter au backend
       });
     } catch (gamificationError) {
-      console.warn("Failed to fetch gamification data:", gamificationError);
-      // Pas de données par défaut - laisser null jusqu'à ce que le backend soit prêt
+      // Silencieux - endpoint pas encore implémenté
       setGamification(null);
     }
   }, []);
@@ -72,9 +71,9 @@ function App() {
   useEffect(() => {
     // Check if user is already authenticated on page load
     const checkAuthOnLoad = () => {
-      const token = localStorage.getItem('auth_token');
-      const userData = localStorage.getItem('user_data');
-      
+      const token = localStorage.getItem("auth_token");
+      const userData = localStorage.getItem("user_data");
+
       if (token && userData) {
         try {
           const user = JSON.parse(userData);
@@ -89,10 +88,10 @@ function App() {
           // Try to fetch gamification data
           fetchGamificationData();
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error("Error parsing user data:", error);
           // Clear invalid data
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user_data');
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_data");
         }
       }
     };

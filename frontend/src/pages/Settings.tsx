@@ -81,15 +81,17 @@ const Settings = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6 text-white">
+    <div className="max-w-4xl mx-auto p-4 space-y-6 text-main-black dark:text-main-white">
       {/* Header */}
       <Card variant="glass" padding="lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <SettingsIcon className="w-8 h-8 text-blue-400" />
+            <SettingsIcon className="w-8 h-8 text-info" />
             <div>
-              <h1 className="text-3xl font-bold text-white">Paramètres</h1>
-              <p className="text-white/70">
+              <h1 className="text-3xl font-bold text-main-black dark:text-main-white">
+                Paramètres
+              </h1>
+              <p className="text-main-black/70 dark:text-main-white/70">
                 Personnalisez votre expérience EcoComfort
               </p>
             </div>
@@ -97,7 +99,7 @@ const Settings = () => {
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-main-green text-white rounded-lg hover:bg-main-green/90 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-main-green text-main-black dark:text-main-white rounded-lg hover:bg-main-green/90 transition-colors disabled:opacity-50"
           >
             {loading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -113,18 +115,20 @@ const Settings = () => {
 
       {/* Notifications */}
       <Card variant="glass" padding="lg">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-green-400" />
+        <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+          <Bell className="w-5 h-5 text-success" />
           Notifications
         </h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-blue-400" />
+              <Bell className="w-5 h-5 text-info" />
               <div>
-                <div className="font-medium text-white">Notifications push</div>
-                <div className="text-sm text-white/70">
+                <div className="font-medium text-main-black dark:text-main-white">
+                  Notifications push
+                </div>
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Recevoir des notifications en temps réel
                 </div>
               </div>
@@ -134,7 +138,7 @@ const Settings = () => {
               className={`w-12 h-6 rounded-full transition-colors ${
                 settings.notifications.push_enabled
                   ? "bg-main-green"
-                  : "bg-gray-600"
+                  : "bg-medium-grey"
               }`}
             >
               <div
@@ -149,12 +153,12 @@ const Settings = () => {
 
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <BellOff className="w-5 h-5 text-yellow-400" />
+              <BellOff className="w-5 h-5 text-warning" />
               <div>
-                <div className="font-medium text-white">
+                <div className="font-medium text-main-black dark:text-main-white">
                   Notifications critiques uniquement
                 </div>
-                <div className="text-sm text-white/70">
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Ne recevoir que les alertes importantes
                 </div>
               </div>
@@ -164,7 +168,7 @@ const Settings = () => {
               className={`w-12 h-6 rounded-full transition-colors ${
                 settings.notifications.critical_only
                   ? "bg-main-green"
-                  : "bg-gray-600"
+                  : "bg-medium-grey"
               }`}
             >
               <div
@@ -181,10 +185,10 @@ const Settings = () => {
             <div className="flex items-center gap-3">
               <Moon className="w-5 h-5 text-purple-400" />
               <div>
-                <div className="font-medium text-white">
+                <div className="font-medium text-main-black dark:text-main-white">
                   Heures silencieuses
                 </div>
-                <div className="text-sm text-white/70">
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Désactiver les notifications la nuit
                 </div>
               </div>
@@ -194,7 +198,7 @@ const Settings = () => {
               className={`w-12 h-6 rounded-full transition-colors ${
                 settings.notifications.quiet_hours.enabled
                   ? "bg-main-green"
-                  : "bg-gray-600"
+                  : "bg-medium-grey"
               }`}
             >
               <div
@@ -211,18 +215,20 @@ const Settings = () => {
 
       {/* Display Settings */}
       <Card variant="glass" padding="lg">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Globe className="w-5 h-5 text-green-400" />
+        <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+          <Globe className="w-5 h-5 text-success" />
           Affichage
         </h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Sun className="w-5 h-5 text-yellow-400" />
+              <Sun className="w-5 h-5 text-warning" />
               <div>
-                <div className="font-medium text-white">Thème</div>
-                <div className="text-sm text-white/70">
+                <div className="font-medium text-main-black dark:text-main-white">
+                  Thème
+                </div>
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Mode sombre ou clair
                 </div>
               </div>
@@ -232,7 +238,7 @@ const Settings = () => {
               onChange={(e) =>
                 updateSetting("display", "theme", e.target.value)
               }
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-main-black dark:text-main-white"
             >
               <option value="dark">Sombre</option>
               <option value="light">Clair</option>
@@ -242,12 +248,12 @@ const Settings = () => {
 
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Thermometer className="w-5 h-5 text-red-400" />
+              <Thermometer className="w-5 h-5 text-critical" />
               <div>
-                <div className="font-medium text-white">
+                <div className="font-medium text-main-black dark:text-main-white">
                   Unité de température
                 </div>
-                <div className="text-sm text-white/70">
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Celsius ou Fahrenheit
                 </div>
               </div>
@@ -257,7 +263,7 @@ const Settings = () => {
               onChange={(e) =>
                 updateSetting("display", "temperature_unit", e.target.value)
               }
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-main-black dark:text-main-white"
             >
               <option value="celsius">Celsius (°C)</option>
               <option value="fahrenheit">Fahrenheit (°F)</option>
@@ -266,10 +272,14 @@ const Settings = () => {
 
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Euro className="w-5 h-5 text-green-400" />
+              <Euro className="w-5 h-5 text-success" />
               <div>
-                <div className="font-medium text-white">Devise</div>
-                <div className="text-sm text-white/70">Monnaie d'affichage</div>
+                <div className="font-medium text-main-black dark:text-main-white">
+                  Devise
+                </div>
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
+                  Monnaie d'affichage
+                </div>
               </div>
             </div>
             <select
@@ -277,7 +287,7 @@ const Settings = () => {
               onChange={(e) =>
                 updateSetting("display", "currency", e.target.value)
               }
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-main-black dark:text-main-white"
             >
               <option value="EUR">Euro (€)</option>
               <option value="USD">Dollar ($)</option>
@@ -288,20 +298,20 @@ const Settings = () => {
 
       {/* Gamification Settings */}
       <Card variant="glass" padding="lg">
-        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-red-400" />
+        <h2 className="text-xl font-semibold text-main-black dark:text-main-white mb-4 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-critical" />
           Gamification
         </h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-yellow-400" />
+              <Trophy className="w-5 h-5 text-warning" />
               <div>
-                <div className="font-medium text-white">
+                <div className="font-medium text-main-black dark:text-main-white">
                   Système de gamification
                 </div>
-                <div className="text-sm text-white/70">
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Activer les points et niveaux
                 </div>
               </div>
@@ -309,7 +319,9 @@ const Settings = () => {
             <button
               onClick={() => toggleSetting("gamification", "enabled")}
               className={`w-12 h-6 rounded-full transition-colors ${
-                settings.gamification.enabled ? "bg-main-green" : "bg-gray-600"
+                settings.gamification.enabled
+                  ? "bg-main-green"
+                  : "bg-medium-grey"
               }`}
             >
               <div
@@ -324,10 +336,12 @@ const Settings = () => {
 
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-blue-400" />
+              <Users className="w-5 h-5 text-info" />
               <div>
-                <div className="font-medium text-white">Classement</div>
-                <div className="text-sm text-white/70">
+                <div className="font-medium text-main-black dark:text-main-white">
+                  Classement
+                </div>
+                <div className="text-sm text-main-black/70 dark:text-main-white/70">
                   Afficher le classement des utilisateurs
                 </div>
               </div>
@@ -337,7 +351,7 @@ const Settings = () => {
               className={`w-12 h-6 rounded-full transition-colors ${
                 settings.gamification.show_leaderboard
                   ? "bg-main-green"
-                  : "bg-gray-600"
+                  : "bg-medium-grey"
               }`}
             >
               <div

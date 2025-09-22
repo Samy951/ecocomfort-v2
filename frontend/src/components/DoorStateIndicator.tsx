@@ -33,37 +33,37 @@ const DoorStateIndicator: React.FC<DoorStateIndicatorProps> = ({
     closed: {
       label: "FERMÉE",
       icon: DoorClosed,
-      color: "text-green-400",
-      bgColor: "bg-green-500/20",
-      borderColor: "border-green-500/30",
+      color: "text-success",
+      bgColor: "bg-success/20",
+      borderColor: "border-success/30",
     },
     opened: {
       label: "OUVERTE",
       icon: DoorOpen,
-      color: "text-red-400",
-      bgColor: "bg-red-500/20",
-      borderColor: "border-red-500/30",
+      color: "text-critical",
+      bgColor: "bg-critical/20",
+      borderColor: "border-critical/30",
     },
     probably_opened: {
       label: "PROBABLEMENT OUVERTE",
       icon: AlertTriangle,
-      color: "text-yellow-400",
-      bgColor: "bg-yellow-500/20",
-      borderColor: "border-yellow-500/30",
+      color: "text-warning",
+      bgColor: "bg-warning/20",
+      borderColor: "border-warning/30",
     },
     moving: {
       label: "EN MOUVEMENT",
       icon: DoorOpen,
-      color: "text-blue-400",
-      bgColor: "bg-blue-500/20",
-      borderColor: "border-blue-500/30",
+      color: "text-info",
+      bgColor: "bg-info/20",
+      borderColor: "border-info/30",
     },
   };
 
   const certaintyConfig = {
-    CERTAIN: { label: "Certain", color: "text-green-400" },
-    PROBABLE: { label: "Probable", color: "text-yellow-400" },
-    UNCERTAIN: { label: "Incertain", color: "text-red-400" },
+    CERTAIN: { label: "Certain", color: "text-success" },
+    PROBABLE: { label: "Probable", color: "text-warning" },
+    UNCERTAIN: { label: "Incertain", color: "text-critical" },
   };
 
   const config = stateConfig[state];
@@ -125,7 +125,7 @@ const DoorStateIndicator: React.FC<DoorStateIndicatorProps> = ({
                     onClick={() => setConfirmState("closed")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
                       confirmState === "closed"
-                        ? "bg-green-500/20 border-green-500 text-green-400"
+                        ? "bg-success/20 border-success text-success"
                         : "bg-white/5 border-white/20 text-white/70"
                     }`}
                   >
@@ -136,7 +136,7 @@ const DoorStateIndicator: React.FC<DoorStateIndicatorProps> = ({
                     onClick={() => setConfirmState("opened")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
                       confirmState === "opened"
-                        ? "bg-red-500/20 border-red-500 text-red-400"
+                        ? "bg-critical/20 border-critical text-critical"
                         : "bg-white/5 border-white/20 text-white/70"
                     }`}
                   >
@@ -162,7 +162,7 @@ const DoorStateIndicator: React.FC<DoorStateIndicatorProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex-1 bg-medium-grey text-main-white py-2 px-4 rounded-lg hover:bg-medium-grey/80 transition-colors"
                 >
                   Annuler
                 </button>

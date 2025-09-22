@@ -42,71 +42,71 @@
 @layer components {
   /* Typography Components */
   .text-h1-mobile {
-    @apply text-h1-mobile font-pangea text-main-black dark:text-main-white;
+    @apply text-4xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h1-desktop {
-    @apply text-h1-desktop font-pangea text-main-black dark:text-main-white;
+    @apply text-5xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h2-mobile {
-    @apply text-h2-mobile font-pangea text-main-black dark:text-main-white;
+    @apply text-3xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h2-desktop {
-    @apply text-h2-desktop font-pangea text-main-black dark:text-main-white;
+    @apply text-4xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h3-mobile {
-    @apply text-h3-mobile font-pangea text-main-black dark:text-main-white;
+    @apply text-2xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h3-desktop {
-    @apply text-h3-desktop font-pangea text-main-black dark:text-main-white;
+    @apply text-3xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h4-mobile {
-    @apply text-h4-mobile font-pangea text-main-black dark:text-main-white;
+    @apply text-xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h4-desktop {
-    @apply text-h4-desktop font-pangea text-main-black dark:text-main-white;
+    @apply text-2xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h5-mobile {
-    @apply text-h5-mobile font-pangea text-main-black dark:text-main-white;
+    @apply text-lg font-pangea text-main-black dark:text-main-white;
   }
 
   .text-h5-desktop {
-    @apply text-h5-desktop font-pangea text-main-black dark:text-main-white;
+    @apply text-xl font-pangea text-main-black dark:text-main-white;
   }
 
   .text-paragraph-big {
-    @apply text-paragraph-big font-inter text-dark-grey dark:text-main-white;
+    @apply text-lg font-inter text-dark-grey dark:text-main-white;
   }
 
   .text-paragraph-medium {
-    @apply text-paragraph-medium font-inter text-dark-grey dark:text-main-white;
+    @apply text-base font-inter text-dark-grey dark:text-main-white;
   }
 
   .text-paragraph-small {
-    @apply text-paragraph-small font-inter text-dark-grey dark:text-main-white;
+    @apply text-sm font-inter text-dark-grey dark:text-main-white;
   }
 
   .text-paragraph-tiny {
-    @apply text-paragraph-tiny font-inter text-dark-grey dark:text-main-white;
+    @apply text-xs font-inter text-dark-grey dark:text-main-white;
   }
 
   .text-link-big {
-    @apply text-link-big font-inter text-main-black dark:text-main-white;
+    @apply text-lg font-inter text-main-black dark:text-main-white;
   }
 
   .text-link-medium {
-    @apply text-link-medium font-inter text-main-black dark:text-main-white;
+    @apply text-base font-inter text-main-black dark:text-main-white;
   }
 
   .text-link-small {
-    @apply text-link-small font-inter text-main-black dark:text-main-white;
+    @apply text-sm font-inter text-main-black dark:text-main-white;
   }
 
   /* Button Components */
