@@ -63,7 +63,12 @@ const Input: React.FC<InputProps> = ({
           </div>
         )}
 
-        <input type={inputType} className={inputClasses} {...props} />
+        <input 
+          type={inputType} 
+          className={inputClasses} 
+          autoComplete={type === "password" ? "current-password" : undefined}
+          {...props} 
+        />
 
         {type === "password" && (
           <button
