@@ -19,6 +19,17 @@ export default function Login({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const safeStoreUser = (user: any) => {
+    try {
+      if (typeof window !== "undefined" && "localStorage" in window) {
+        const { id, name, email } = user || {};
+        localStorage.setItem("user_data", JSON.stringify({ id, name, email }));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -31,11 +42,8 @@ export default function Login({
       );
 
       if (response.token && response.user) {
-        // Store token and user data
         apiService.setAuthToken(response.token);
-        localStorage.setItem("user_data", JSON.stringify(response.user));
-
-        // Call success callback
+        safeStoreUser(response.user);
         onLoginSuccess(response.token, response.user);
       } else {
         throw new Error("Réponse d'authentification invalide");
@@ -55,7 +63,6 @@ export default function Login({
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    // Clear error when user starts typing
     if (error) setError(null);
   };
 
@@ -70,11 +77,8 @@ export default function Login({
       );
 
       if (response.token && response.user) {
-        // Store token and user data
         apiService.setAuthToken(response.token);
-        localStorage.setItem("user_data", JSON.stringify(response.user));
-
-        // Call success callback
+        safeStoreUser(response.user);
         onLoginSuccess(response.token, response.user);
       } else {
         throw new Error("Réponse d'authentification invalide");
