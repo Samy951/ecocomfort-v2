@@ -230,7 +230,7 @@ const Dashboard = ({
 
   const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
 
-  const activeSensors = sensors.filter((s) => s.is_online).length;
+  const activeSensors = sensors.filter((s) => s.isOnline).length;
   const totalSensors = sensors.length;
 
   return (
@@ -413,11 +413,11 @@ const Dashboard = ({
                   <div className="flex items-center gap-2">
                     <span
                       className={`w-3 h-3 rounded-full ${
-                        sensor.is_online ? "bg-main-green" : "bg-error"
+                        sensor.isOnline ? "bg-main-green" : "bg-error"
                       }`}
                     />
                     <Typography variant="paragraph-small" color="medium-grey">
-                      {sensor.is_online ? "En ligne" : "Hors ligne"}
+                      {sensor.isOnline ? "En ligne" : "Hors ligne"}
                     </Typography>
                   </div>
                 </div>

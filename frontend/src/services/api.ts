@@ -160,7 +160,13 @@ class ApiService {
   constructor() {
     // Always use relative URL in development to leverage Vite proxy
     this.baseURL = "/api";
-    this.authToken = localStorage.getItem("auth_token");
+    try {
+      if (typeof window !== "undefined" && "localStorage" in window) {
+        this.authToken = localStorage.getItem("auth_token");
+      }
+    } catch {
+      this.authToken = null;
+    }
   }
 
   // Get the appropriate endpoint prefix (always use authenticated endpoints)
@@ -276,7 +282,7 @@ class ApiService {
       total_cost: number;
     };
   }> {
-    return this.makeRequest(`/dashboard/room/${roomId}`);
+    return this.makeRequest(`/dashboard/room/${encodeURIComponent(roomId)}`);
   }
 
   // Sensor History
@@ -308,7 +314,7 @@ class ApiService {
         queryParams.append("metrics[]", metric)
       );
 
-    const endpoint = `/sensors/${sensorId}/history${
+    const endpoint = `/sensors/${encodeURIComponent(sensorId)}/history${
       queryParams.toString() ? "?" + queryParams.toString() : ""
     }`;
     return this.makeRequest(endpoint);
@@ -348,7 +354,7 @@ class ApiService {
     eventId: string
   ): Promise<ApiResponse<{ acknowledged: boolean }>> {
     return this.makeRequest<ApiResponse<{ acknowledged: boolean }>>(
-      `/dashboard/alerts/${eventId}/acknowledge`,
+      `/dashboard/alerts/${encodeURIComponent(eventId)}/acknowledge`,
       {
         method: "POST",
       }
@@ -371,13 +377,25 @@ class ApiService {
   // Set authentication token
   setAuthToken(token: string) {
     this.authToken = token;
-    localStorage.setItem("auth_token", token);
+    try {
+      if (typeof window !== "undefined" && "localStorage" in window) {
+        localStorage.setItem("auth_token", token);
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   // Clear authentication token
   clearAuthToken() {
     this.authToken = null;
-    localStorage.removeItem("auth_token");
+    try {
+      if (typeof window !== "undefined" && "localStorage" in window) {
+        localStorage.removeItem("auth_token");
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   // Authentication methods
@@ -472,7 +490,7 @@ class ApiService {
         z: number;
       } | null;
       message?: string;
-    }>(`/sensors/${sensorId}/calibration`);
+    }>(`/sensors/${encodeURIComponent(sensorId)}/calibration`);
   }
 
   async checkSensorStability(sensorId: string): Promise<{
@@ -510,7 +528,7 @@ class ApiService {
       };
       ready_for_calibration: boolean;
       reason?: string;
-    }>(`/sensors/${sensorId}/stability`);
+    }>(`/sensors/${encodeURIComponent(sensorId)}/stability`);
   }
 
   async calibrateDoorPosition(
@@ -565,7 +583,7 @@ class ApiService {
         };
       };
       error?: string;
-    }>(`/sensors/${sensorId}/calibrate/door`, {
+    }>(`/sensors/${encodeURIComponent(sensorId)}/calibrate/door`, {
       method: "POST",
       body: JSON.stringify(options),
     });
@@ -580,7 +598,7 @@ class ApiService {
   }> {
     const body = reason ? JSON.stringify({ reason }) : undefined;
     return this.makeRequest<{ success: boolean; message: string }>(
-      `/sensors/${sensorId}/calibration`,
+      `/sensors/${encodeURIComponent(sensorId)}/calibration`,
       {
         method: "DELETE",
         body,
@@ -592,7 +610,7 @@ class ApiService {
     valid: boolean;
     message: string;
   }> {
-    return this.makeRequest(`/sensors/${sensorId}/validate-position`, {
+    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/validate-position`, {
       method: "POST",
     });
   }
@@ -635,7 +653,7 @@ class ApiService {
     if (params.from) queryParams.append("from", params.from);
     if (params.to) queryParams.append("to", params.to);
 
-    const endpoint = `/sensors/${sensorId}/calibration/history${
+    const endpoint = `/sensors/${encodeURIComponent(sensorId)}/calibration/history${
       queryParams.toString() ? "?" + queryParams.toString() : ""
     }`;
     return this.makeRequest(endpoint);
@@ -656,7 +674,7 @@ class ApiService {
       confirmation_id: string;
     };
   }> {
-    return this.makeRequest(`/sensors/${sensorId}/confirm-door-state`, {
+    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/confirm-door-state`, {
       method: "POST",
       body: JSON.stringify({
         state,
@@ -686,7 +704,7 @@ class ApiService {
       };
     }>;
   }> {
-    return this.makeRequest(`/sensors/${sensorId}/confirmation-history`);
+    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/confirmation-history`);
   }
 
   // Events/Alerts methods
