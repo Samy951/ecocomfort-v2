@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import Login from './Login';
-import Register from './Register';
+import React, { useState } from "react";
+import Login from "./Login";
+import Register from "./Register";
 
 interface AuthWrapperProps {
   onAuthSuccess: (token: string, user: any) => void;

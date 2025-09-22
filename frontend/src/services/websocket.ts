@@ -1,428 +1,180 @@
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-import type { SensorDataUpdateEvent, AlertCreatedEvent } from '../types';
-
-// Configure Pusher
-(window as any).Pusher = Pusher;
+// Service WebSocket avec Socket.IO pour EcoComfort
+import { io, Socket } from 'socket.io-client';
 
 class WebSocketService {
-  private echo: Echo<any> | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 10;
-  private reconnectDelay = 1000;
+  private socket: Socket | null = null;
   private isConnected = false;
   private subscribers: Map<string, Set<Function>> = new Map();
-  private organizationId: string | null = null;
-  private userId: string | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private pendingUserInit: { userId: string; organizationId: string } | null = null;
 
   constructor() {
-    this.initializeEcho();
-    // For testing - subscribe to public door certainty changes immediately
-    setTimeout(() => {
-      this.subscribeToPublicChannels();
-    }, 1000);
+    // WebSocket activé - backend Socket.IO disponible
+    this.connect();
   }
 
-  private initializeEcho() {
+  private connect() {
     try {
-      this.echo = new Echo({
-        broadcaster: 'reverb',
-        key: import.meta.env.VITE_APP_KEY || 'app-key',
-        wsHost: import.meta.env.VITE_WS_HOST || 'localhost',
-        wsPort: parseInt(import.meta.env.VITE_WS_PORT || '8080'),
-        wssPort: parseInt(import.meta.env.VITE_WS_PORT || '8080'),
-        forceTLS: false,
-        encrypted: false,
-        disableStats: true,
-        enabledTransports: ['ws'],
-        // Prevent reconnection loops
-        activityTimeout: 120000,
-        pongTimeout: 30000,
-        authorizer: (channel: any) => {
-          return {
-            authorize: (socketId: string, callback: Function) => {
-              // Get auth token from localStorage or state management
-              const token = localStorage.getItem('auth_token');
-              
-              if (!token) {
-                callback('Unauthorized', null);
-                return;
-              }
-
-              fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/broadcasting/auth`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                  socket_id: socketId,
-                  channel_name: channel.name,
-                })
-              })
-              .then(response => response.json())
-              .then(data => {
-                callback(null, data);
-              })
-              .catch(error => {
-                console.error('WebSocket auth error:', error);
-                callback('Unauthorized', null);
-              });
-            }
-          };
-        },
+      // URL Socket.IO du backend
+      const socketUrl = import.meta.env.VITE_WS_URL || "http://localhost:3000";
+      
+      console.log("🔌 Tentative de connexion Socket.IO:", socketUrl);
+      
+      this.socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true
       });
 
-      // Connection event handlers
-      this.echo.connector.pusher.connection.bind('connected', () => {
-        console.log('✅ WebSocket connected');
+      this.socket.on('connect', () => {
+        console.log("🔌 Socket.IO connecté:", this.socket?.id);
         this.isConnected = true;
         this.reconnectAttempts = 0;
-        this.emit('connected', { connected: true });
+        this.notifySubscribers("connected", { socketId: this.socket?.id });
+        
+        // Envoyer l'initialisation utilisateur différée si elle existe
+        if (this.pendingUserInit) {
+          console.log("👤 Envoi de l'initialisation utilisateur différée:", this.pendingUserInit);
+          this.emit("user_init", this.pendingUserInit);
+          this.pendingUserInit = null;
+        }
       });
 
-      this.echo.connector.pusher.connection.bind('disconnected', () => {
-        console.log('❌ WebSocket disconnected');
+      this.socket.on('disconnect', (reason) => {
+        console.log("🔌 Socket.IO déconnecté:", reason);
         this.isConnected = false;
-        this.emit('disconnected', { connected: false });
-        this.attemptReconnect();
+        this.notifySubscribers("disconnected", { reason });
+        this.handleReconnect();
       });
 
-      this.echo.connector.pusher.connection.bind('error', (error: any) => {
-        console.error('❌ WebSocket error:', error);
-        this.emit('error', { error });
+      this.socket.on('connect_error', (error) => {
+        console.error("❌ Erreur connexion Socket.IO:", error);
+        this.isConnected = false;
+        this.handleReconnect();
+      });
+
+      // Écouter les événements spécifiques du backend
+      this.socket.on('door-state-changed', (data) => {
+        console.log("🚪 État porte changé:", data);
+        this.notifySubscribers("door-state-changed", data);
+      });
+
+      this.socket.on('sensor-data-updated', (data) => {
+        console.log("📊 Données capteur mises à jour:", data);
+        this.notifySubscribers("sensor-data-updated", data);
+      });
+
+      this.socket.on('points-awarded', (data) => {
+        console.log("🏆 Points attribués:", data);
+        this.notifySubscribers("points-awarded", data);
+      });
+
+      this.socket.on('badge-awarded', (data) => {
+        console.log("🎖️ Badge attribué:", data);
+        this.notifySubscribers("badge-awarded", data);
+      });
+
+      this.socket.on('level-up', (data) => {
+        console.log("⬆️ Montée de niveau:", data);
+        this.notifySubscribers("level-up", data);
       });
 
     } catch (error) {
-      console.error('Failed to initialize WebSocket:', error);
-      this.attemptReconnect();
+      console.error("Erreur connexion Socket.IO:", error);
+      this.handleReconnect();
     }
   }
 
-  private attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
-      return;
+  private handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
+
+      setTimeout(() => {
+        console.log(
+          `🔄 Tentative de reconnexion ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
+        );
+        this.connect();
+      }, delay);
+    } else {
+      console.warn("⚠️ Nombre maximum de tentatives de reconnexion atteint");
     }
-
-    this.reconnectAttempts++;
-    console.log(`🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-
-    setTimeout(() => {
-      this.initializeEcho();
-    }, this.reconnectDelay * this.reconnectAttempts);
   }
 
-  // Initialize user-specific channels
-  public initializeUser(userId: string, organizationId: string) {
-    this.userId = userId;
-    this.organizationId = organizationId;
-
-    if (!this.echo) return;
-
-    // Subscribe to organization-wide updates
-    this.subscribeToOrganization(organizationId);
-
-    // Subscribe to user-specific notifications
-    this.subscribeToUserNotifications(userId);
-
-    // Subscribe to critical alerts
-    this.subscribeToCriticalAlerts(organizationId);
-  }
-
-  // Subscribe to organization updates
-  public subscribeToOrganization(organizationId: string) {
-    if (!this.echo) return;
-
-    const channelName = `organization.${organizationId}`;
-    
-    this.echo.private(channelName)
-      .listen('SensorDataUpdated', (event: SensorDataUpdateEvent) => {
-        this.emit('sensor-data-updated', event);
-      })
-      .listen('AlertCreated', (event: AlertCreatedEvent) => {
-        this.emit('alert-created', event);
-      })
-      .listen('EnergyAnalyticsUpdated', (event: any) => {
-        this.emit('energy-updated', event);
-      })
-      .listen('door.certainty.changed', (event: any) => {
-        this.emit('door-state-certainty-changed', event);
+  private notifySubscribers(eventType: string, data: any) {
+    const subscribers = this.subscribers.get(eventType);
+    if (subscribers) {
+      subscribers.forEach((callback) => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error("Erreur dans callback WebSocket:", error);
+        }
       });
-
-    // Also subscribe to public door certainty changes
-    this.echo.channel('door.certainty.changes')
-      .listen('door.certainty.changed', (event: any) => {
-        this.emit('door-state-certainty-changed', event);
-      });
+    }
   }
 
-  // Subscribe to public channels (for testing without auth)
-  public subscribeToPublicChannels() {
-    if (!this.echo) return;
-
-    console.log('📡 Subscribing to public door certainty changes...');
-    
-    const publicChannel = this.echo.channel('door.certainty.changes');
-    
-    publicChannel.subscribed(() => {
-      console.log('✅ Successfully subscribed to door.certainty.changes');
-    });
-    
-    publicChannel.error((error: any) => {
-      console.error('❌ Error subscribing to door.certainty.changes:', error);
-    });
-    
-    publicChannel.listen('door.certainty.changed', (event: any) => {
-      console.log('🚪 Public door certainty event received:', event);
-      this.emit('door-state-certainty-changed', event);
-    });
-
-    // Test with all possible event names
-    publicChannel.listen('.door.certainty.changed', (event: any) => {
-      console.log('🚪 Public door certainty event received (dot prefix):', event);
-      this.emit('door-state-certainty-changed', event);
-    });
-
-    // Also try organization channel for testing
-    console.log('📡 Subscribing to organization.1 for testing...');
-    const privateChannel = this.echo.private('organization.1');
-    
-    privateChannel.subscribed(() => {
-      console.log('✅ Successfully subscribed to organization.1');
-    });
-    
-    privateChannel.error((error: any) => {
-      console.error('❌ Error subscribing to organization.1:', error);
-    });
-    
-    privateChannel.listen('door.certainty.changed', (event: any) => {
-      console.log('🚪 Organization door certainty event received:', event);
-      this.emit('door-state-certainty-changed', event);
-    });
-  }
-
-  // Subscribe to specific room updates
-  public subscribeToRoom(roomId: string) {
-    if (!this.echo) return;
-
-    const channelName = `room.${roomId}`;
-    
-    this.echo.private(channelName)
-      .listen('SensorDataUpdated', (event: SensorDataUpdateEvent) => {
-        this.emit('room-sensor-updated', { ...event, roomId });
-      })
-      .listen('AlertCreated', (event: AlertCreatedEvent) => {
-        this.emit('room-alert-created', { ...event, roomId });
-      });
-  }
-
-  // Subscribe to specific sensor updates
-  public subscribeToSensor(sensorId: string) {
-    if (!this.echo) return;
-
-    const channelName = `sensor.${sensorId}`;
-    
-    this.echo.private(channelName)
-      .listen('SensorDataUpdated', (event: SensorDataUpdateEvent) => {
-        this.emit('sensor-updated', { ...event, sensorId });
-      })
-      .listen('SensorAlert', (event: any) => {
-        this.emit('sensor-alert', { ...event, sensorId });
-      });
-  }
-
-  // Subscribe to user notifications
-  public subscribeToUserNotifications(userId: string) {
-    if (!this.echo) return;
-
-    const channelName = `notifications.${userId}`;
-    
-    this.echo.private(channelName)
-      .listen('NotificationSent', (event: any) => {
-        this.emit('notification-received', event);
-        this.showPushNotification(event);
-      });
-  }
-
-  // Subscribe to critical alerts
-  public subscribeToCriticalAlerts(organizationId: string) {
-    if (!this.echo) return;
-
-    const channelName = `critical-alerts.${organizationId}`;
-    
-    this.echo.private(channelName)
-      .listen('CriticalAlert', (event: any) => {
-        this.emit('critical-alert', event);
-        this.showCriticalNotification(event);
-      });
-  }
-
-  // Subscribe to leaderboard updates
-  public subscribeToLeaderboard(organizationId: string) {
-    if (!this.echo) return;
-
-    const channelName = `leaderboard.${organizationId}`;
-    
-    this.echo.private(channelName)
-      .listen('LeaderboardUpdated', (event: any) => {
-        this.emit('leaderboard-updated', event);
-      });
-  }
-
-  // Event subscription system
+  // Méthodes publiques
   public on(eventType: string, callback: Function) {
     if (!this.subscribers.has(eventType)) {
       this.subscribers.set(eventType, new Set());
     }
     this.subscribers.get(eventType)!.add(callback);
 
-    // Return unsubscribe function
+    // Retourner une fonction de désabonnement
     return () => {
-      this.subscribers.get(eventType)?.delete(callback);
+      const subscribers = this.subscribers.get(eventType);
+      if (subscribers) {
+        subscribers.delete(callback);
+        if (subscribers.size === 0) {
+          this.subscribers.delete(eventType);
+        }
+      }
     };
-  }
-
-  public off(eventType: string, callback?: Function) {
-    if (!callback) {
-      this.subscribers.delete(eventType);
-      return;
-    }
-    this.subscribers.get(eventType)?.delete(callback);
   }
 
   public emit(eventType: string, data: any) {
-    const callbacks = this.subscribers.get(eventType);
-    if (callbacks) {
-      callbacks.forEach(callback => callback(data));
+    if (this.socket && this.isConnected) {
+      this.socket.emit(eventType, data);
+    } else {
+      console.warn("⚠️ Socket.IO non connecté, impossible d'émettre:", eventType);
     }
   }
 
-  // Push notification support
-  private async showPushNotification(event: any) {
-    if (!('Notification' in window) || Notification.permission !== 'granted') {
-      return;
+  public initializeUser(userId: string, organizationId: string) {
+    console.log(
+      `👤 Initialisation utilisateur: ${userId}, organisation: ${organizationId}`
+    );
+    
+    // Attendre que la connexion soit établie avant d'émettre
+    if (this.isConnected && this.socket) {
+      this.emit("user_init", { userId, organizationId });
+    } else {
+      console.log("⏳ Connexion Socket.IO en cours, initialisation différée...");
+      // Stocker les données utilisateur pour les envoyer une fois connecté
+      this.pendingUserInit = { userId, organizationId };
     }
-
-    const options: NotificationOptions = {
-      body: event.message || 'New notification received',
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: `ecocomfort-${event.id}`,
-      requireInteraction: event.severity === 'critical',
-      // actions: event.actions || [], // Actions not supported in standard Notification API
-      data: event
-      // timestamp: new Date().getTime() // Not supported in NotificationOptions
-    };
-
-    try {
-      const notification = new Notification(event.title || 'EcoComfort', options);
-      
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-        // Navigate to relevant page if needed
-        this.emit('notification-clicked', event);
-      };
-
-      // Auto-close non-critical notifications
-      if (event.severity !== 'critical') {
-        setTimeout(() => notification.close(), 5000);
-      }
-
-    } catch (error) {
-      console.error('Failed to show push notification:', error);
-    }
-  }
-
-  private async showCriticalNotification(event: any) {
-    // Always show critical notifications as browser notifications
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        this.showPushNotification({
-          ...event,
-          severity: 'critical',
-          title: '🚨 ALERTE CRITIQUE - EcoComfort'
-        });
-      }
-    }
-
-    // Also emit for UI handling
-    this.emit('critical-notification', event);
-  }
-
-  // Utility methods
-  public isConnected_(): boolean {
-    return this.isConnected;
-  }
-
-  public getConnectionState(): string {
-    if (!this.echo) return 'disconnected';
-    return this.echo.connector.pusher.connection.state;
   }
 
   public disconnect() {
-    if (this.echo) {
-      this.echo.disconnect();
-      this.echo = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
     this.isConnected = false;
     this.subscribers.clear();
   }
 
-  public reconnect() {
-    this.disconnect();
-    this.reconnectAttempts = 0;
-    this.initializeEcho();
-    
-    // Re-subscribe to channels if user is set
-    if (this.userId && this.organizationId) {
-      setTimeout(() => {
-        this.initializeUser(this.userId!, this.organizationId!);
-      }, 1000);
-    }
+  public getConnectionStatus(): boolean {
+    return this.isConnected;
   }
 
-  // Leave specific channels
-  public leaveRoom(roomId: string) {
-    if (this.echo) {
-      this.echo.leave(`room.${roomId}`);
-    }
-  }
-
-  public leaveSensor(sensorId: string) {
-    if (this.echo) {
-      this.echo.leave(`sensor.${sensorId}`);
-    }
-  }
-
-  // Health check
-  public async healthCheck(): Promise<boolean> {
-    return new Promise((resolve) => {
-      if (!this.echo) {
-        resolve(false);
-        return;
-      }
-
-      const timeout = setTimeout(() => {
-        resolve(false);
-      }, 5000);
-
-      this.echo.connector.pusher.connection.bind('connected', () => {
-        clearTimeout(timeout);
-        resolve(true);
-      });
-
-      this.echo.connector.pusher.connection.bind('error', () => {
-        clearTimeout(timeout);
-        resolve(false);
-      });
-    });
+  public getSocketId(): string | undefined {
+    return this.socket?.id;
   }
 }
 
-// Create singleton instance
+// Instance singleton
 const webSocketService = new WebSocketService();
 export default webSocketService;

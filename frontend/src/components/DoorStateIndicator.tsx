@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
-import { DoorOpen, DoorClosed, RotateCcw, AlertTriangle, Edit } from 'lucide-react';
+import React, { useState } from "react";
+import { DoorOpen, DoorClosed, AlertTriangle, CheckCircle } from "lucide-react";
+import { Card } from "./ui";
 
 interface DoorStateIndicatorProps {
-  state: 'closed' | 'opened' | 'probably_opened' | 'moving';
-  certainty: 'CERTAIN' | 'PROBABLE' | 'UNCERTAIN';
+  state: "closed" | "opened" | "probably_opened" | "moving";
+  certainty: "CERTAIN" | "PROBABLE" | "UNCERTAIN";
   needsConfirmation: boolean;
   sensorId: string;
-  onConfirmState?: (sensorId: string, state: 'closed' | 'opened', notes?: string) => void;
+  onConfirmState?: (
+    sensorId: string,
+    state: "closed" | "opened",
+    notes?: string
+  ) => void;
   className?: string;
 }
 
@@ -16,217 +21,164 @@ const DoorStateIndicator: React.FC<DoorStateIndicatorProps> = ({
   needsConfirmation,
   sensorId,
   onConfirmState,
-  className = ''
+  className = "",
 }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmState, setConfirmState] = useState<"closed" | "opened">(
+    "closed"
+  );
+  const [notes, setNotes] = useState("");
 
   const stateConfig = {
     closed: {
-      label: 'FERMÉE',
+      label: "FERMÉE",
       icon: DoorClosed,
-      color: '#10B981', // Vert
-      bgColor: 'bg-green-100',
-      textColor: 'text-green-800',
-      borderColor: 'border-green-200'
+      color: "text-success",
+      bgColor: "bg-success/20",
+      borderColor: "border-success/30",
     },
     opened: {
-      label: 'OUVERTE', 
+      label: "OUVERTE",
       icon: DoorOpen,
-      color: '#EF4444', // Rouge
-      bgColor: 'bg-red-100',
-      textColor: 'text-red-800',
-      borderColor: 'border-red-200'
+      color: "text-critical",
+      bgColor: "bg-critical/20",
+      borderColor: "border-critical/30",
     },
     probably_opened: {
-      label: 'PROBABLEMENT OUVERTE',
+      label: "PROBABLEMENT OUVERTE",
       icon: AlertTriangle,
-      color: '#F59E0B', // Orange
-      bgColor: 'bg-orange-100', 
-      textColor: 'text-orange-800',
-      borderColor: 'border-orange-200'
+      color: "text-warning",
+      bgColor: "bg-warning/20",
+      borderColor: "border-warning/30",
     },
     moving: {
-      label: 'EN MOUVEMENT',
-      icon: RotateCcw,
-      color: '#3B82F6', // Bleu
-      bgColor: 'bg-blue-100',
-      textColor: 'text-blue-800', 
-      borderColor: 'border-blue-200'
-    }
+      label: "EN MOUVEMENT",
+      icon: DoorOpen,
+      color: "text-info",
+      bgColor: "bg-info/20",
+      borderColor: "border-info/30",
+    },
+  };
+
+  const certaintyConfig = {
+    CERTAIN: { label: "Certain", color: "text-success" },
+    PROBABLE: { label: "Probable", color: "text-warning" },
+    UNCERTAIN: { label: "Incertain", color: "text-critical" },
   };
 
   const config = stateConfig[state];
-  const IconComponent = config.icon;
+  const certaintyInfo = certaintyConfig[certainty];
+  const Icon = config.icon;
 
-  const certaintyIndicator = {
-    CERTAIN: '✅',
-    PROBABLE: '⚠️', 
-    UNCERTAIN: '❓'
+  const handleConfirm = () => {
+    if (onConfirmState) {
+      onConfirmState(sensorId, confirmState, notes);
+    }
+    setShowConfirmModal(false);
+    setNotes("");
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <div className="flex items-center gap-1">
-        <div
-          onClick={() => setShowConfirmModal(true)}
-          className={`
-            flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:opacity-80
-            ${config.bgColor} ${config.textColor} ${config.borderColor}
-            ${needsConfirmation ? 'ring-2 ring-orange-300 ring-opacity-50 animate-pulse' : ''}
-          `}
-          style={{ borderColor: config.color }}
-          title="Cliquez pour corriger l'état"
-        >
-          <IconComponent 
-            size={18} 
-            color={config.color}
-            className={state === 'moving' ? 'animate-spin' : ''}
-          />
-          <span className="font-medium text-sm">
-            {config.label}
-          </span>
-          <span className="text-xs opacity-75">
-            {certaintyIndicator[certainty]}
-          </span>
-        </div>
-        
-        <button
-          onClick={() => setShowConfirmModal(true)}
-          className="
-            p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 
-            hover:bg-gray-100 rounded-md
-          "
-          title="Modifier l'état manuellement"
-        >
-          <Edit size={14} />
-        </button>
-      </div>
-
-      {needsConfirmation && (
-        <button
-          onClick={() => setShowConfirmModal(true)}
-          className="
-            absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 
-            rounded-full shadow-lg hover:bg-orange-600 transition-colors duration-200
-            animate-bounce
-          "
-        >
-          Confirmer
-        </button>
-      )}
-
-      {showConfirmModal && (
-        <ConfirmationModal
-          currentState={state}
-          isConfirmationRequired={needsConfirmation}
-          onConfirm={(confirmedState, notes) => {
-            onConfirmState?.(sensorId, confirmedState, notes);
-            setShowConfirmModal(false);
-          }}
-          onClose={() => setShowConfirmModal(false)}
-        />
-      )}
-    </div>
-  );
-};
-
-interface ConfirmationModalProps {
-  currentState: string;
-  isConfirmationRequired: boolean;
-  onConfirm: (state: 'closed' | 'opened', notes?: string) => void;
-  onClose: () => void;
-}
-
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
-  currentState,
-  isConfirmationRequired,
-  onConfirm,
-  onClose
-}) => {
-  // Pre-select current state, defaulting to 'closed' if current state is not determinable
-  const getInitialState = (): 'closed' | 'opened' => {
-    if (currentState === 'opened' || currentState === 'probably_opened') return 'opened';
-    return 'closed';
-  };
-  
-  const [selectedState, setSelectedState] = useState<'closed' | 'opened'>(getInitialState());
-  const [notes, setNotes] = useState('');
-
-  const modalTitle = isConfirmationRequired 
-    ? "Confirmer l'état de la porte" 
-    : "Modifier l'état de la porte";
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">
-          {modalTitle}
-        </h3>
-        
-        <p className="text-sm text-gray-600 mb-4">
-          État détecté : <span className="font-medium">{currentState}</span>
-        </p>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            État réel :
-          </label>
-          <div className="space-y-2">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="closed"
-                checked={selectedState === 'closed'}
-                onChange={(e) => setSelectedState(e.target.value as 'closed')}
-                className="mr-2"
-              />
-              <DoorClosed size={16} className="mr-2 text-green-600" />
-              <span>Fermée</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="opened"
-                checked={selectedState === 'opened'}
-                onChange={(e) => setSelectedState(e.target.value as 'opened')}
-                className="mr-2"
-              />
-              <DoorOpen size={16} className="mr-2 text-red-600" />
-              <span>Ouverte</span>
-            </label>
+    <>
+      <div
+        className={`p-3 rounded-lg border ${config.bgColor} ${config.borderColor} ${className}`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon className={`w-5 h-5 ${config.color}`} />
+            <div>
+              <div className={`font-medium ${config.color}`}>
+                {config.label}
+              </div>
+              <div className={`text-xs ${certaintyInfo.color}`}>
+                {certaintyInfo.label}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notes (optionnel) :
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            rows={3}
-            placeholder="Commentaires supplémentaires..."
-            maxLength={500}
-          />
-        </div>
-
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={() => onConfirm(selectedState, notes)}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Confirmer
-          </button>
+          {needsConfirmation && (
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded transition-colors"
+            >
+              Confirmer
+            </button>
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card variant="glass" padding="lg" className="w-full max-w-md">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Confirmer l'état de la porte
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-2">
+                  État de la porte
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmState("closed")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
+                      confirmState === "closed"
+                        ? "bg-success/20 border-success text-success"
+                        : "bg-white/5 border-white/20 text-white/70"
+                    }`}
+                  >
+                    <DoorClosed className="w-4 h-4" />
+                    Fermée
+                  </button>
+                  <button
+                    onClick={() => setConfirmState("opened")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
+                      confirmState === "opened"
+                        ? "bg-critical/20 border-critical text-critical"
+                        : "bg-white/5 border-white/20 text-white/70"
+                    }`}
+                  >
+                    <DoorOpen className="w-4 h-4" />
+                    Ouverte
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-white/70 mb-2">
+                  Notes (optionnel)
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:border-main-green focus:outline-none"
+                  placeholder="Ajoutez des détails..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 bg-medium-grey text-main-white py-2 px-4 rounded-lg hover:bg-medium-grey/80 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="flex-1 bg-main-green text-white py-2 px-4 rounded-lg hover:bg-main-green/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </>
   );
 };
 
