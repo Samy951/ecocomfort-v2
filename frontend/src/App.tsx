@@ -2,12 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import AuthWrapper from "./components/AuthWrapper";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Admin from "./pages/Admin";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { lazy, Suspense } from "react";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Admin = lazy(() => import("./pages/Admin"));
 import webSocketService from "./services/websocket";
-import apiService from "./services/api";
+import * as DashboardApi from "./services/api/dashboard";
+import { logout as authLogout } from "./services/api/auth";
 import type { GamificationLevel } from "./types";
 
 function App() {
@@ -24,28 +27,12 @@ function App() {
   } | null>(null);
 
   const fetchGamificationData = useCallback(async () => {
-    try {
-      // Essayer de récupérer les données de gamification du backend
-      const gamificationData = await apiService.getGamificationData();
-      setGamification({
-        current_level: gamificationData.level || 1,
-        next_level: (gamificationData.level || 1) + 1,
-        total_points: gamificationData.points || 0,
-        points_for_current: 0, // TODO: Ajouter au backend
-        points_for_next: 100, // TODO: Ajouter au backend
-        points_to_next: 100, // TODO: Ajouter au backend
-        progress_percent: 0, // TODO: Ajouter au backend
-        is_max_level: false, // TODO: Ajouter au backend
-      });
-    } catch (gamificationError) {
-      // Silencieux - endpoint pas encore implémenté
-      setGamification(null);
-    }
+    // Endpoint non implémenté côté backend pour l'instant
+    setGamification(null);
   }, []);
 
   const handleAuthSuccess = useCallback(
     (token: string, user: { id: string; name: string; email: string }) => {
-      apiService.setAuthToken(token);
       localStorage.setItem("auth_token", token); // Persist token
       localStorage.setItem("user_data", JSON.stringify(user)); // Persist user data
       setCurrentUser({
@@ -66,7 +53,7 @@ function App() {
   );
 
   const handleLogout = useCallback(() => {
-    apiService.logout();
+    authLogout();
     setCurrentUser(null);
     setIsConnected(false);
     setGamification(null);
@@ -81,7 +68,6 @@ function App() {
       if (token && userData) {
         try {
           const user = JSON.parse(userData);
-          apiService.setAuthToken(token);
           setCurrentUser({
             id: user.id,
             name: user.name,
@@ -140,30 +126,34 @@ function App() {
         userLevel={currentUser.level}
         onLogout={handleLogout}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Dashboard
-                setIsConnected={setIsConnected}
-                gamification={gamification}
-                currentUser={currentUser}
+        <ErrorBoundary>
+          <Suspense fallback={<div className="p-6">Chargement...</div>}>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <Dashboard
+                    setIsConnected={setIsConnected}
+                    gamification={gamification}
+                    currentUser={currentUser}
+                  />
+                }
               />
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <Profile
-                userPoints={currentUser.points}
-                userLevel={currentUser.level}
-                gamificationLevel={gamification}
+              <Route
+                path="/profile"
+                element={
+                  <Profile
+                    userPoints={currentUser.points}
+                    userLevel={currentUser.level}
+                    gamificationLevel={gamification}
+                  />
+                }
               />
-            }
-          />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/admin" element={<Admin />} />
-        </Routes>
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </Layout>
     </Router>
   );

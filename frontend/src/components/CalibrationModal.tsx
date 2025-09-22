@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Settings, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
-import apiService from "../services/api";
+import * as SensorsApi from "../services/api/sensors";
 import { Card } from "./ui";
 
 interface CalibrationModalProps {
@@ -34,7 +34,9 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
 
     try {
       // Vérifier la stabilité du capteur
-      const stability = await apiService.checkSensorStability(sensor.sensor_id);
+      const stability: any = await SensorsApi.checkSensorStability(
+        sensor.sensor_id
+      );
 
       if (!stability.stable) {
         setStatus("error");
@@ -48,10 +50,13 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
       setMessage("Calibration en cours...");
 
       // Effectuer la calibration
-      const result = await apiService.calibrateDoorPosition(sensor.sensor_id, {
-        type: "closed_position",
-        confirm: true,
-      });
+      const result: any = await SensorsApi.calibrateDoorPosition(
+        sensor.sensor_id,
+        {
+          type: "closed_position",
+          confirm: true,
+        }
+      );
 
       if (result.success) {
         setStatus("success");
@@ -77,16 +82,22 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="calibration-title"
+    >
       <Card variant="glass" padding="lg" className="w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 id="calibration-title" className="text-lg font-semibold text-white flex items-center gap-2">
             <Settings className="w-5 h-5" />
             Calibration du capteur
           </h3>
           <button
             onClick={handleClose}
             className="text-white/70 hover:text-white transition-colors"
+            aria-label="Fermer la fenêtre de calibration"
           >
             <X className="w-5 h-5" />
           </button>
@@ -108,7 +119,9 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
             </div>
             <button
               onClick={handleCalibration}
-              className="w-full bg-main-green text-white py-2 px-4 rounded-lg hover:bg-main-green/90 transition-colors"
+              disabled={isLoading}
+              aria-busy={isLoading}
+              className="w-full bg-main-green text-white py-2 px-4 rounded-lg hover:bg-main-green/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Commencer la calibration
             </button>

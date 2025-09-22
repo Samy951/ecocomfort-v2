@@ -48,10 +48,19 @@ const Input: React.FC<InputProps> = ({
 
   const inputClasses = `${baseClasses} ${variantClasses[variant]} ${iconClasses} ${passwordClasses} ${className}`;
 
+  // Generate an id when none provided so label can associate
+  const inputId = React.useMemo(
+    () => props.id || `input-${Math.random().toString(36).slice(2)}`,
+    [props.id]
+  );
+
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-paragraph-medium font-inter font-medium text-main-black dark:text-main-white mb-2">
+        <label
+          htmlFor={inputId}
+          className="block text-paragraph-medium font-inter font-medium text-main-black dark:text-main-white mb-2"
+        >
           {label}
         </label>
       )}
@@ -63,17 +72,18 @@ const Input: React.FC<InputProps> = ({
           </div>
         )}
 
-        <input 
-          type={inputType} 
-          className={inputClasses} 
+        <input
+          type={inputType}
+          className={inputClasses}
+          id={inputId}
           autoComplete={
-            type === "password" 
-              ? "current-password" 
-              : type === "email" 
-                ? "username" 
-                : undefined
+            type === "password"
+              ? "current-password"
+              : type === "email"
+              ? "username"
+              : undefined
           }
-          {...props} 
+          {...props}
         />
 
         {type === "password" && (

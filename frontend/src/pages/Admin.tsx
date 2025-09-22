@@ -7,7 +7,8 @@ import {
   Users,
   Shield,
 } from "lucide-react";
-import apiService from "../services/api";
+import * as SensorsApi from "../services/api/sensors";
+import * as DashboardApi from "../services/api/dashboard";
 import { Card } from "../components/ui";
 
 const Admin = () => {
@@ -28,11 +29,11 @@ const Admin = () => {
     try {
       setLoading(true);
       const [sensorsData, overviewData] = await Promise.all([
-        apiService.getSensorData().catch((err) => {
+        SensorsApi.getSensorData().catch((err) => {
           console.warn("Failed to fetch sensor data:", err);
           return { sensors: [] };
         }),
-        apiService.getDashboardOverview().catch((err) => {
+        DashboardApi.getDashboardOverview().catch((err) => {
           console.warn("Failed to fetch dashboard overview:", err);
           return { infrastructure: { total_rooms: 0, total_buildings: 0 } };
         }),
@@ -41,7 +42,7 @@ const Admin = () => {
       setStats({
         totalSensors: sensorsData.sensors?.length || 0,
         activeSensors:
-          sensorsData.sensors?.filter((s: any) => s.is_online).length || 0,
+          sensorsData.sensors?.filter((s: any) => s.isOnline).length || 0,
         totalRooms: overviewData.infrastructure?.total_rooms || 0,
         totalBuildings: overviewData.infrastructure?.total_buildings || 0,
       });

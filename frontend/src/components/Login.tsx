@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Mail, Lock, Leaf, ArrowRight } from "lucide-react";
 import { Button, Card, Input, Typography } from "./ui";
-import apiService from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import * as AuthApi from "../services/api/auth";
+import { setAuthToken } from "../services/api/client";
 
 interface LoginProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -18,6 +20,7 @@ export default function Login({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { login: authLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,18 +28,14 @@ export default function Login({
     setError(null);
 
     try {
-      const response = await apiService.login(
-        formData.email,
-        formData.password
-      );
+      const response = await AuthApi.login(formData.email, formData.password);
 
       if (response.token && response.user) {
-        // Store token and user data
-        apiService.setAuthToken(response.token);
-        localStorage.setItem("user_data", JSON.stringify(response.user));
-
-        // Call success callback
-        onLoginSuccess(response.token, response.user);
+        setAuthToken(response.token);
+        await authLogin(formData.email, formData.password);
+        const { id, name, email } = response.user;
+        localStorage.setItem("user_data", JSON.stringify({ id, name, email }));
+        onLoginSuccess(response.token, { id, name, email });
       } else {
         throw new Error("Réponse d'authentification invalide");
       }
@@ -55,7 +54,6 @@ export default function Login({
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    // Clear error when user starts typing
     if (error) setError(null);
   };
 
@@ -64,18 +62,14 @@ export default function Login({
     setError(null);
 
     try {
-      const response = await apiService.login(
-        "admin@ecocomfort.com",
-        "Admin@123"
-      );
+      const demo = await AuthApi.login("admin@ecocomfort.com", "Admin@123");
 
-      if (response.token && response.user) {
-        // Store token and user data
-        apiService.setAuthToken(response.token);
-        localStorage.setItem("user_data", JSON.stringify(response.user));
-
-        // Call success callback
-        onLoginSuccess(response.token, response.user);
+      if (demo.token && demo.user) {
+        setAuthToken(demo.token);
+        await authLogin("admin@ecocomfort.com", "Admin@123");
+        const { id, name, email } = demo.user;
+        localStorage.setItem("user_data", JSON.stringify({ id, name, email }));
+        onLoginSuccess(demo.token, { id, name, email });
       } else {
         throw new Error("Réponse d'authentification invalide");
       }

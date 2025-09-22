@@ -21,21 +21,46 @@ const Layout: React.FC<LayoutProps> = ({
   const [unreadNotifications] = useState(0);
 
   useEffect(() => {
-    // Load dark mode preference
+    // Load dark mode preference once
     const savedTheme = localStorage.getItem("ecocomfort-theme");
     if (savedTheme) {
-      setDarkMode(savedTheme === "dark");
+      const preferDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldDark =
+        savedTheme === "dark" || (savedTheme === "auto" && preferDark);
+      setDarkMode(shouldDark);
+      document.documentElement.classList.toggle("dark", shouldDark);
+    } else {
+      document.documentElement.classList.toggle("dark", darkMode);
     }
 
-    // Apply theme to document
-    document.documentElement.classList.toggle("dark", darkMode);
-  }, [darkMode]);
+    // Listen to theme change events from settings
+    const onThemeChanged = (e: any) => {
+      const t = e?.detail as string | undefined;
+      const preferDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldDark = t === "dark" || (t === "auto" && preferDark);
+      setDarkMode(shouldDark);
+      document.documentElement.classList.toggle("dark", shouldDark);
+    };
+    window.addEventListener("theme:changed", onThemeChanged as EventListener);
+    return () =>
+      window.removeEventListener(
+        "theme:changed",
+        onThemeChanged as EventListener
+      );
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    localStorage.setItem("ecocomfort-theme", newMode ? "dark" : "light");
+    const theme = newMode ? "dark" : "light";
+    localStorage.setItem("ecocomfort-theme", theme);
     document.documentElement.classList.toggle("dark", newMode);
+    // Broadcast change so settings and other parts stay in sync
+    window.dispatchEvent(new CustomEvent("theme:changed", { detail: theme }));
   };
 
   const handleNotificationsClick = () => {

@@ -45,6 +45,35 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Initialize from localStorage and apply theme immediately
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ecocomfort-settings");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSettings((prev) => ({ ...prev, ...parsed }));
+        applyTheme(parsed.display?.theme || settings.display.theme);
+      } else {
+        applyTheme(settings.display.theme);
+      }
+    } catch {
+      applyTheme(settings.display.theme);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const applyTheme = (theme: string) => {
+    const root = document.documentElement;
+    const preferDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldDark = theme === "dark" || (theme === "auto" && preferDark);
+    root.classList.toggle("dark", shouldDark);
+    localStorage.setItem("ecocomfort-theme", theme);
+    // Notify app of theme change to keep sidebar/navigation in sync
+    window.dispatchEvent(new CustomEvent("theme:changed", { detail: theme }));
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -78,6 +107,11 @@ const Settings = () => {
         [key]: value,
       },
     }));
+
+    // Apply theme instantly if updated
+    if (category === "display" && key === "theme") {
+      applyTheme(value);
+    }
   };
 
   return (
@@ -234,6 +268,8 @@ const Settings = () => {
               </div>
             </div>
             <select
+              id="display-theme"
+              name="display_theme"
               value={settings.display.theme}
               onChange={(e) =>
                 updateSetting("display", "theme", e.target.value)
@@ -259,6 +295,8 @@ const Settings = () => {
               </div>
             </div>
             <select
+              id="display-temperature-unit"
+              name="display_temperature_unit"
               value={settings.display.temperature_unit}
               onChange={(e) =>
                 updateSetting("display", "temperature_unit", e.target.value)
@@ -283,6 +321,8 @@ const Settings = () => {
               </div>
             </div>
             <select
+              id="display-currency"
+              name="display_currency"
               value={settings.display.currency}
               onChange={(e) =>
                 updateSetting("display", "currency", e.target.value)

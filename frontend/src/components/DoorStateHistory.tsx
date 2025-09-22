@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Clock, User, DoorOpen, DoorClosed, AlertTriangle } from "lucide-react";
-import apiService from "../services/api";
+import * as SensorsApi from "../services/api/sensors";
 import { Card } from "./ui";
 
 interface DoorStateHistoryProps {
@@ -37,8 +37,10 @@ const DoorStateHistory: React.FC<DoorStateHistoryProps> = ({
   const loadHistory = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getDoorStateConfirmationHistory(sensorId);
-      setHistory(data.data || []);
+      const data: any = await SensorsApi.getDoorStateConfirmationHistory(
+        sensorId
+      );
+      setHistory((data && data.data) || []);
     } catch (err: any) {
       setError(err.message || "Erreur lors du chargement de l'historique");
     } finally {

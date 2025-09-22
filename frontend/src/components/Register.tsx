@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Mail, Lock, User, Building, Leaf, ArrowRight } from "lucide-react";
 import { Button, Card, Input, Typography } from "./ui";
-import apiService from "../services/api";
+import * as AuthApi from "../services/api/auth";
 
 interface RegisterProps {
   onRegisterSuccess: (token: string, user: any) => void;
@@ -40,18 +40,16 @@ export default function Register({
     }
 
     try {
-      const response = await apiService.register(
-        formData.name,
-        formData.email,
-        formData.password,
-        formData.password_confirmation,
-        formData.organization_name
-      );
+      const response = await AuthApi.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.password_confirmation,
+        organization_name: formData.organization_name,
+      });
 
       if (response.token && response.user) {
-        apiService.setAuthToken(response.token);
         localStorage.setItem("user_data", JSON.stringify(response.user));
-
         onRegisterSuccess(response.token, response.user);
       } else {
         throw new Error("Réponse d'inscription invalide");

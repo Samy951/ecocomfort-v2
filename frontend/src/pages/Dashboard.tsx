@@ -24,7 +24,8 @@ import {
 } from "recharts";
 import webSocketService from "../services/websocket";
 import Gamification from "../components/Gamification";
-import apiService from "../services/api";
+import * as SensorsApi from "../services/api/sensors";
+import * as DashboardApi from "../services/api/dashboard";
 import type { GamificationLevel } from "../types";
 import { Card, Typography, Button } from "../components/ui";
 
@@ -58,6 +59,23 @@ const Dashboard = ({
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
+  // Theme awareness for charts – must be before any conditional return
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
+    if (typeof document === "undefined") return true;
+    return document.documentElement.classList.contains("dark");
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      const dark = document.documentElement.classList.contains("dark");
+      setIsDarkTheme(dark);
+    };
+    window.addEventListener("theme:changed", handler as EventListener);
+    handler();
+    return () =>
+      window.removeEventListener("theme:changed", handler as EventListener);
+  }, []);
+
   const loadAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -65,15 +83,14 @@ const Dashboard = ({
     try {
       // Charger les données séparément pour éviter les conflits de types
       try {
-        const sensorsData = await apiService.getSensorData().catch((err) => {
+        const sensorsData = await SensorsApi.getSensorData().catch((err) => {
           console.warn("Failed to fetch sensor data:", err);
           return null;
         });
         if (sensorsData) setCurrentSensors(sensorsData);
 
-        const energyData = await apiService
-          .getEnergyAnalytics(1)
-          .catch((err) => {
+        const energyData = await DashboardApi.getEnergyAnalytics(1).catch(
+          (err) => {
             console.warn("Failed to fetch energy data:", err);
             // Retourner des données par défaut en cas d'erreur backend
             return {
@@ -84,16 +101,25 @@ const Dashboard = ({
               outdoorTemp: 15,
               timestamp: new Date(),
             };
-          });
+          }
+        );
         if (energyData) setCurrentEnergy(energyData);
 
-        const dailyData = await apiService
-          .getDashboardOverview()
-          .catch((err) => {
-            console.warn("Failed to fetch dashboard overview:", err);
-            return null;
-          });
-        if (dailyData) setDailyReport(dailyData);
+        const dailyData = await DashboardApi.getEnergyDaily().catch((err) => {
+          console.warn("Failed to fetch dashboard overview:", err);
+          return null;
+        });
+        if (dailyData) {
+          setDailyReport(dailyData);
+          const hourly = dailyData.hourlyMetrics;
+          if (hourly && hourly.length) {
+            const data = hourly.map((h) => ({
+              name: `${h.hour}h`,
+              energyLoss: h.totalLossWatts ?? 0,
+            }));
+            setChartData(data as any);
+          }
+        }
 
         // Note: gamificationData sera géré par le composant parent (App.tsx)
       } catch (err: any) {
@@ -166,13 +192,10 @@ const Dashboard = ({
       }
     );
 
-    const unsubscribeLevelUp = webSocketService.on(
-      "level-up",
-      (event: any) => {
-        console.log("⬆️ Level up:", event);
-        // TODO: Mettre à jour le niveau utilisateur
-      }
-    );
+    const unsubscribeLevelUp = webSocketService.on("level-up", (event: any) => {
+      console.log("⬆️ Level up:", event);
+      // TODO: Mettre à jour le niveau utilisateur
+    });
 
     return () => {
       unsubscribeConnected();
@@ -187,11 +210,16 @@ const Dashboard = ({
   // Pas de données factices - utiliser les vraies données du backend
   const [chartData, setChartData] = useState([]);
 
-  // Les graphiques seront alimentés par les vraies données quand disponibles
+  // Fallback chart data to avoid empty white chart
   useEffect(() => {
-    // TODO: Remplacer par les vraies données du backend
-    setChartData([]);
-  }, [currentSensors, currentEnergy]);
+    if (!chartData || (Array.isArray(chartData) && chartData.length === 0)) {
+      const data = Array.from({ length: 12 }, (_, i) => ({
+        name: `${i * 2}h`,
+        energyLoss: 0,
+      }));
+      setChartData(data as any);
+    }
+  }, [chartData]);
 
   if (loading) {
     return (
@@ -230,8 +258,16 @@ const Dashboard = ({
 
   const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
 
-  const activeSensors = sensors.filter((s) => s.is_online).length;
+  const activeSensors = sensors.filter((s) => s.isOnline).length;
   const totalSensors = sensors.length;
+
+  const axisColor = isDarkTheme ? "rgba(255,255,255,0.85)" : "#111827"; // tick text color
+  const axisLineColor = isDarkTheme
+    ? "rgba(255,255,255,0.7)"
+    : "rgba(17,24,39,0.4)"; // line color
+  const gridColor = isDarkTheme
+    ? "rgba(255,255,255,0.1)"
+    : "rgba(17,24,39,0.1)";
 
   return (
     <div className="space-y-6">
@@ -333,56 +369,82 @@ const Dashboard = ({
           <TrendingUp className="w-5 h-5" /> Analyse Énergétique (Dernières 24h)
         </Typography>
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={chartData}
-              margin={{
-                top: 10,
-                right: 30,
-                left: 0,
-                bottom: 0,
-              }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-              />
-              <XAxis dataKey="name" stroke="rgba(255,255,255,0.7)" />
-              <YAxis yAxisId="left" stroke="rgba(255,255,255,0.7)" />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                stroke="rgba(255,255,255,0.7)"
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgb(16, 16, 16)", // main-black
-                  border: "none",
-                  borderRadius: "8px",
+          {Array.isArray(chartData) &&
+          chartData.every((d: any) => (d?.energyLoss ?? 0) === 0) ? (
+            <div className="h-full flex items-center justify-center text-medium-grey">
+              Aucune donnée disponible pour les dernières 24h
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0,
                 }}
-                labelStyle={{ color: "rgb(47, 206, 101)" }} // main-green
-                itemStyle={{ color: "rgb(255, 255, 255)" }} // main-white
-              />
-              <Area
-                yAxisId="left"
-                type="monotone"
-                dataKey="temperature"
-                stroke="rgb(47, 206, 101)" // main-green
-                fill="rgb(47, 206, 101)" // main-green
-                fillOpacity={0.3}
-                name="Température (°C)"
-              />
-              <Area
-                yAxisId="right"
-                type="monotone"
-                dataKey="energyLoss"
-                stroke="rgb(245, 158, 11)" // amber-500 equivalent
-                fill="rgb(245, 158, 11)" // amber-500 equivalent
-                fillOpacity={0.2}
-                name="Perte Énergétique (W)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis
+                  dataKey="name"
+                  stroke={axisLineColor}
+                  tick={{ fill: axisColor, fontSize: 12 }}
+                  tickMargin={8}
+                  tickLine={{ stroke: axisLineColor }}
+                  axisLine={{ stroke: axisLineColor }}
+                  interval="preserveStartEnd"
+                  minTickGap={12}
+                  height={30}
+                />
+                <YAxis
+                  yAxisId="left"
+                  stroke={axisLineColor}
+                  tick={{ fill: axisColor, fontSize: 12 }}
+                  tickMargin={8}
+                  tickLine={{ stroke: axisLineColor }}
+                  axisLine={{ stroke: axisLineColor }}
+                  allowDecimals={false}
+                  domain={[0, (dataMax: number) => (dataMax || 0) * 1.2 + 1]}
+                  width={44}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={axisLineColor}
+                  tick={{ fill: axisColor, fontSize: 12 }}
+                  tickMargin={8}
+                  tickLine={{ stroke: axisLineColor }}
+                  axisLine={{ stroke: axisLineColor }}
+                  allowDecimals={false}
+                  domain={[0, (dataMax: number) => (dataMax || 0) * 1.2 + 1]}
+                  width={44}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDarkTheme
+                      ? "rgb(16, 16, 16)"
+                      : "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: isDarkTheme ? "#fff" : "#111827",
+                  }}
+                  labelStyle={{ color: "rgb(47, 206, 101)" }}
+                  itemStyle={{ color: isDarkTheme ? "#fff" : "#111827" }}
+                />
+                {/* If we later add temperature series, enable this area */}
+                <Area
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="energyLoss"
+                  stroke={isDarkTheme ? "rgb(245, 158, 11)" : "#2563eb"}
+                  fill={isDarkTheme ? "rgb(245, 158, 11)" : "#2563eb"}
+                  fillOpacity={0.2}
+                  name="Perte Énergétique (W)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </Card>
 

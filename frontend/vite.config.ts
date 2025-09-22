@@ -71,18 +71,40 @@ export default defineConfig({
   server: {
     host: true,
     port: 3001, // Frontend dev server port
+    // Relax CSP for development so Vite HMR (which may use eval) works
+    headers: {
+      "Content-Security-Policy": [
+        "default-src 'self'",
+        // Allow inline/eval and blob/data scripts for Vite dev preamble/HMR only in development
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:",
+        "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:",
+        // Allow dev API and HMR websocket
+        "connect-src 'self' http://localhost:3000 http://localhost:3001 ws://localhost:3001 ws://localhost:3000",
+        // Allow Google Fonts stylesheets
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        // Allow Google Fonts files and data URIs
+        "font-src 'self' https://fonts.gstatic.com data:",
+        // Common media allowances in dev
+        "img-src 'self' data: blob:",
+        // Workers for Vite in dev
+        "worker-src 'self' blob:",
+        // Frame ancestors
+        "frame-ancestors 'self'",
+      ].join("; "),
+    },
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000', // Backend port
+      "/api": {
+        target: "http://localhost:3000", // Backend port
         changeOrigin: true,
         secure: false,
       },
-      '/broadcasting/auth': {
-        target: 'http://localhost:3000', // Backend port
+      "/broadcasting/auth": {
+        target: "http://localhost:3000", // Backend port
         changeOrigin: true,
         secure: false,
-      }
-    }
+      },
+    },
   },
   build: {
     outDir: "dist",

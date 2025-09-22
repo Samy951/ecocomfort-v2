@@ -17,7 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import apiService from "../services/api";
+import * as AlertsApi from "../services/api/alerts";
 import { Card } from "../components/ui";
 
 const History = () => {
@@ -33,12 +33,12 @@ const History = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getEvents({
+      const data: any = await AlertsApi.getAlerts({
         limit: 100,
         start_date: getStartDate(),
         end_date: new Date().toISOString(),
       });
-      setEvents(data.events || []);
+      setEvents((data && data.events) || []);
     } catch (err: any) {
       setError(err.message || "Erreur lors du chargement de l'historique");
     } finally {

@@ -19,7 +19,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { GamificationLevel } from "../types";
-import apiService from "../services/api";
 import { Card } from "../components/ui";
 
 interface ProfileProps {
@@ -83,6 +82,19 @@ const Profile = ({
       return { name: "Intermédiaire", icon: "🥈", color: "text-success" };
     return { name: "Débutant", icon: "🥉", color: "text-medium-grey" };
   };
+
+  // Theme-aware colors (match dashboard logic)
+  const isDarkTheme =
+    typeof document !== "undefined"
+      ? document.documentElement.classList.contains("dark")
+      : true;
+  const axisColor = isDarkTheme ? "rgba(255,255,255,0.85)" : "#111827";
+  const axisLineColor = isDarkTheme
+    ? "rgba(255,255,255,0.7)"
+    : "rgba(17,24,39,0.4)";
+  const gridColor = isDarkTheme
+    ? "rgba(255,255,255,0.1)"
+    : "rgba(17,24,39,0.1)";
 
   if (loading) {
     return (
@@ -189,38 +201,53 @@ const Profile = ({
         </h2>
 
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={activityData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-              />
-              <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" />
-              <YAxis stroke="rgba(255,255,255,0.5)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "8px",
-                  color: "white",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="points"
-                stroke="rgb(47, 206, 101)" // main-green
-                strokeWidth={2}
-                name="Points gagnés"
-              />
-              <Line
-                type="monotone"
-                dataKey="energy_saved"
-                stroke="rgb(59, 130, 246)" // blue-500 equivalent
-                strokeWidth={2}
-                name="Énergie économisée (W)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {activityData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-medium-grey">
+              Aucune activité enregistrée sur 7 jours
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis
+                  dataKey="date"
+                  stroke={axisLineColor}
+                  tick={{ fill: axisColor, fontSize: 12 }}
+                  tickLine={{ stroke: axisLineColor }}
+                  axisLine={{ stroke: axisLineColor }}
+                />
+                <YAxis
+                  stroke={axisLineColor}
+                  tick={{ fill: axisColor, fontSize: 12 }}
+                  tickLine={{ stroke: axisLineColor }}
+                  axisLine={{ stroke: axisLineColor }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDarkTheme ? "rgb(16,16,16)" : "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: isDarkTheme ? "#fff" : "#111827",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="points"
+                  stroke="rgb(47, 206, 101)"
+                  strokeWidth={2}
+                  name="Points gagnés"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="energy_saved"
+                  stroke={isDarkTheme ? "rgb(245, 158, 11)" : "#2563eb"}
+                  strokeWidth={2}
+                  name="Énergie économisée (W)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </Card>
 
