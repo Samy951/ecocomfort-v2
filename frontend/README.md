@@ -7,18 +7,21 @@ EcoComfort Frontend est une application React moderne développée avec TypeScri
 ## 🚀 Technologies utilisées
 
 ### Core Technologies
+
 - **React 19.1.1** - Framework UI moderne
 - **TypeScript 5.8.3** - Typage statique et sécurité
 - **Vite 5.4.20** - Build tool rapide et moderne
 - **Tailwind CSS 3.4.17** - Framework CSS utility-first
 
 ### Libraries principales
+
 - **React Router DOM 6.30.1** - Navigation et routage
 - **Socket.IO Client 4.8.1** - Communication temps réel
 - **Recharts 3.1.2** - Visualisation de données
 - **Lucide React 0.541.0** - Icônes modernes
 
 ### Outils de développement
+
 - **ESLint 9.33.0** - Linting et qualité de code
 - **PostCSS 8.5.6** - Traitement CSS
 - **Autoprefixer 10.4.21** - Compatibilité navigateurs
@@ -26,6 +29,7 @@ EcoComfort Frontend est une application React moderne développée avec TypeScri
 ## 🏗️ Architecture
 
 ### Structure des dossiers
+
 ```
 frontend/
 ├── src/
@@ -58,6 +62,7 @@ frontend/
 ### Design System
 
 #### Couleurs personnalisées
+
 ```javascript
 // tailwind.config.js
 colors: {
@@ -65,14 +70,14 @@ colors: {
   'main-green': '#2FCE65',      // Vert principal
   'main-black': '#101010',      // Noir principal
   'main-white': '#FFFFFF',      // Blanc principal
-  
+
   // Couleurs système
   'success': '#2FCE65',         // Succès
   'warning': '#F59E0B',        // Avertissement
   'info': '#3B82F6',           // Information
   'critical': '#EF4444',       // Critique
   'error': '#FF5A5A',          // Erreur
-  
+
   // Couleurs de fond
   'light-grey': '#F8F9FA',     // Gris clair
   'medium-grey': '#6B7280',    // Gris moyen
@@ -82,6 +87,7 @@ colors: {
 ```
 
 #### Typographie
+
 ```javascript
 fontSize: {
   'h1': ['2.5rem', { lineHeight: '3rem' }],      // Titre principal
@@ -98,6 +104,7 @@ fontSize: {
 ## 🎨 Composants UI
 
 ### Button Component
+
 ```typescript
 interface ButtonProps {
   variant?: "primary" | "secondary" | "outline" | "ghost";
@@ -110,18 +117,21 @@ interface ButtonProps {
 ```
 
 **Variantes disponibles :**
+
 - `primary` - Bouton principal (vert)
 - `secondary` - Bouton secondaire (noir)
 - `outline` - Bouton contour
 - `ghost` - Bouton transparent
 
 **Tailles disponibles :**
+
 - `big` - Grande taille (h-12, px-6, py-3)
 - `medium` - Taille moyenne (h-10, px-5, py-2.5)
 - `small` - Petite taille (h-8, px-4, py-2)
 - `link` - Style lien (h-auto, px-0, py-0)
 
 ### Card Component
+
 ```typescript
 interface CardProps {
   variant?: "default" | "hover" | "glass";
@@ -131,11 +141,13 @@ interface CardProps {
 ```
 
 **Variantes disponibles :**
+
 - `default` - Carte standard avec ombre
 - `hover` - Effet hover avec élévation
 - `glass` - Effet glassmorphism avec backdrop-blur
 
 ### Input Component
+
 ```typescript
 interface InputProps {
   type?: "text" | "email" | "password" | "number";
@@ -148,16 +160,36 @@ interface InputProps {
 ```
 
 **Fonctionnalités :**
+
 - Support des icônes
 - Gestion des erreurs
 - AutoComplete pour email/password
 - Validation intégrée
 
 ### Typography Component
+
 ```typescript
 interface TypographyProps {
-  variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "paragraph" | "paragraph-small" | "paragraph-tiny";
-  color?: "main-black" | "main-white" | "main-green" | "medium-grey" | "dark-grey" | "error" | "success" | "warning" | "info" | "critical";
+  variant?:
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "paragraph"
+    | "paragraph-small"
+    | "paragraph-tiny";
+  color?:
+    | "main-black"
+    | "main-white"
+    | "main-green"
+    | "medium-grey"
+    | "dark-grey"
+    | "error"
+    | "success"
+    | "warning"
+    | "info"
+    | "critical";
   children: React.ReactNode;
 }
 ```
@@ -169,14 +201,16 @@ interface TypographyProps {
 Service centralisé pour toutes les communications avec le backend REST API.
 
 #### Configuration
+
 ```typescript
 class ApiService {
-  private baseURL: string = "/api";  // Utilise le proxy Vite
+  private baseURL: string = "/api"; // Utilise le proxy Vite
   private authToken: string | null = null;
 }
 ```
 
 #### Méthodes principales
+
 ```typescript
 // Authentification
 async login(email: string, password: string): Promise<AuthResponse>
@@ -193,6 +227,7 @@ private async makeRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 ```
 
 #### Gestion des erreurs
+
 - **401 Unauthorized** - Nettoyage automatique du token
 - **500 Internal Server Error** - Fallback avec données par défaut
 - **404 Not Found** - Gestion gracieuse des endpoints non implémentés
@@ -202,29 +237,33 @@ private async makeRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 Service pour la communication temps réel avec Socket.IO.
 
 #### Configuration WebSocket
+
 ```typescript
 class WebSocketService {
   private socket: Socket | null = null;
   private isConnected = false;
-  private pendingUserInit: { userId: string; organizationId: string } | null = null;
+  private pendingUserInit: { userId: string; organizationId: string } | null =
+    null;
 }
 ```
 
 #### Événements supportés
+
 ```typescript
 // Événements backend
-'door-state-changed'     // Changement d'état des portes
-'sensor-data-updated'    // Mise à jour des données capteurs
-'points-awarded'         // Attribution de points
-'badge-awarded'         // Attribution de badges
-'level-up'              // Montée de niveau
+"door-state-changed"; // Changement d'état des portes
+"sensor-data-updated"; // Mise à jour des données capteurs
+"points-awarded"; // Attribution de points
+"badge-awarded"; // Attribution de badges
+"level-up"; // Montée de niveau
 
 // Événements de connexion
-'connected'             // Connexion établie
-'disconnected'          // Connexion perdue
+"connected"; // Connexion établie
+"disconnected"; // Connexion perdue
 ```
 
 #### Fonctionnalités WebSocket
+
 - **Reconnexion automatique** avec backoff exponentiel
 - **Initialisation utilisateur différée** si connexion en cours
 - **Gestion des erreurs** robuste
@@ -237,6 +276,7 @@ class WebSocketService {
 Page principale avec vue d'ensemble des données IoT.
 
 #### Fonctionnalités Dashboard
+
 - **Cartes de résumé** - Température, portes ouvertes, perte énergétique, capteurs actifs
 - **Graphiques temps réel** - Analyse énergétique avec Recharts
 - **Capteurs temps réel** - Affichage des données des capteurs
@@ -244,15 +284,22 @@ Page principale avec vue d'ensemble des données IoT.
 - **Gestion d'erreurs** - Fallback gracieux en cas d'erreur API
 
 #### Intégration WebSocket
+
 ```typescript
 // Écoute des événements temps réel
-const unsubscribeDoorState = webSocketService.on("door-state-changed", (event) => {
-  loadAllData(); // Rechargement des données
-});
+const unsubscribeDoorState = webSocketService.on(
+  "door-state-changed",
+  (event) => {
+    loadAllData(); // Rechargement des données
+  }
+);
 
-const unsubscribeSensorData = webSocketService.on("sensor-data-updated", (event) => {
-  loadAllData(); // Rechargement des données
-});
+const unsubscribeSensorData = webSocketService.on(
+  "sensor-data-updated",
+  (event) => {
+    loadAllData(); // Rechargement des données
+  }
+);
 ```
 
 ### Admin (`pages/Admin.tsx`)
@@ -260,6 +307,7 @@ const unsubscribeSensorData = webSocketService.on("sensor-data-updated", (event)
 Interface administrateur pour la gestion du système.
 
 #### Fonctionnalités Admin
+
 - **Vue d'ensemble système** - Statistiques globales
 - **Gestion des capteurs** - Liste et statut des capteurs
 - **Alertes critiques** - Gestion des alertes non acquittées
@@ -270,6 +318,7 @@ Interface administrateur pour la gestion du système.
 Profil utilisateur avec données de gamification.
 
 #### Fonctionnalités Profile
+
 - **Informations utilisateur** - Nom, email, organisation
 - **Statistiques gamification** - Niveau, points, progression
 - **Graphiques d'activité** - Historique des points et économies
@@ -280,6 +329,7 @@ Profil utilisateur avec données de gamification.
 Paramètres utilisateur et préférences.
 
 #### Catégories de paramètres
+
 - **Notifications** - Préférences d'alertes
 - **Affichage** - Mode sombre/clair, densité
 - **Sécurité** - Gestion du compte
@@ -290,6 +340,7 @@ Paramètres utilisateur et préférences.
 Historique des données et événements.
 
 #### Fonctionnalités History
+
 - **Filtres temporels** - Période sélectionnable
 - **Graphiques historiques** - Évolution des métriques
 - **Export de données** - Téléchargement des rapports
@@ -298,12 +349,14 @@ Historique des données et événements.
 ## 🔐 Authentification
 
 ### Système d'authentification
+
 - **JWT Token** - Stockage sécurisé dans localStorage
 - **Persistance de session** - Reconnexion automatique au refresh
 - **Gestion des erreurs** - Nettoyage automatique des tokens expirés
 - **Comptes de démo** - Admin demo intégré
 
 ### Flux d'authentification
+
 ```typescript
 // Login
 const response = await apiService.login(email, password);
@@ -323,16 +376,19 @@ if (token && userData) {
 ## 🎨 Design et UX
 
 ### Mobile-First Design
+
 - **Responsive breakpoints** - sm (640px), md (768px), lg (1024px), xl (1280px)
 - **Touch-friendly** - Boutons et zones de clic optimisés
 - **Performance mobile** - Optimisations pour appareils mobiles
 
 ### Dark Mode
+
 - **Toggle automatique** - Basculement système/navigateur
 - **Persistance** - Sauvegarde de la préférence utilisateur
 - **Cohérence** - Tous les composants supportent le mode sombre
 
 ### Accessibilité
+
 - **Contraste** - Respect des standards WCAG
 - **Navigation clavier** - Support complet du clavier
 - **Screen readers** - Attributs ARIA appropriés
@@ -341,6 +397,7 @@ if (token && userData) {
 ## 🚀 Déploiement et développement
 
 ### Scripts disponibles
+
 ```bash
 npm run dev      # Serveur de développement (port 3001)
 npm run build    # Build de production
@@ -349,22 +406,24 @@ npm run preview  # Aperçu du build de production
 ```
 
 ### Configuration de développement
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
   server: {
     port: 3001,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000', // Backend
+      "/api": {
+        target: "http://localhost:3000", // Backend
         changeOrigin: true,
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
 ### Variables d'environnement
+
 ```bash
 VITE_API_URL=http://localhost:3000    # URL du backend
 VITE_WS_URL=http://localhost:3000     # URL WebSocket
@@ -373,17 +432,20 @@ VITE_WS_URL=http://localhost:3000     # URL WebSocket
 ## 🔧 Configuration technique
 
 ### TypeScript
+
 - **Strict mode** activé
 - **Types stricts** pour toutes les interfaces
 - **Imports/exports** ES6 modules
 - **Path mapping** pour les imports absolus
 
 ### ESLint
+
 - **Règles React** - Hooks et best practices
 - **Règles TypeScript** - Typage strict
 - **Formatage** - Code cohérent et lisible
 
 ### Tailwind CSS
+
 - **Purge CSS** - Suppression du CSS non utilisé
 - **Custom utilities** - Classes personnalisées
 - **Dark mode** - Support natif du mode sombre
@@ -392,18 +454,21 @@ VITE_WS_URL=http://localhost:3000     # URL WebSocket
 ## 📊 Performance et optimisation
 
 ### Optimisations Vite
+
 - **Tree shaking** - Suppression du code mort
 - **Code splitting** - Chargement à la demande
 - **Hot Module Replacement** - Rechargement instantané
 - **Source maps** - Debugging facilité
 
 ### Optimisations React
+
 - **Memoization** - useCallback et useMemo
 - **Lazy loading** - Chargement des composants à la demande
 - **Error boundaries** - Gestion des erreurs gracieuse
 - **Concurrent features** - React 19 features
 
 ### Optimisations réseau
+
 - **Proxy API** - Évite les problèmes CORS
 - **WebSocket persistent** - Connexion temps réel stable
 - **Error handling** - Gestion robuste des erreurs réseau
@@ -412,6 +477,7 @@ VITE_WS_URL=http://localhost:3000     # URL WebSocket
 ## 🐛 Debugging et logs
 
 ### Logs WebSocket
+
 ```typescript
 console.log("🔌 Socket.IO connecté:", socketId);
 console.log("👤 Initialisation utilisateur:", userId);
@@ -420,12 +486,14 @@ console.log("📊 Données capteur mises à jour:", data);
 ```
 
 ### Logs API
+
 ```typescript
 console.warn("Failed to fetch sensor data:", err);
 console.error("API request failed for", endpoint, error);
 ```
 
 ### Outils de debugging
+
 - **React DevTools** - Inspection des composants
 - **Redux DevTools** - Debugging de l'état (si applicable)
 - **Network tab** - Monitoring des requêtes
@@ -434,6 +502,7 @@ console.error("API request failed for", endpoint, error);
 ## 🔄 Intégration backend
 
 ### Endpoints API utilisés
+
 ```typescript
 // Authentification
 POST /api/auth/login
@@ -449,24 +518,27 @@ GET /api/gamification/stats/:userId
 ```
 
 ### WebSocket Events
+
 ```typescript
 // Événements émis par le backend
-'door-state-changed'
-'sensor-data-updated'
-'points-awarded'
-'badge-awarded'
-'level-up'
+"door-state-changed";
+"sensor-data-updated";
+"points-awarded";
+"badge-awarded";
+"level-up";
 ```
 
 ## 📈 Métriques et monitoring
 
 ### Indicateurs de performance
+
 - **Temps de chargement** - < 2s sur mobile
 - **Temps de réponse API** - < 500ms
 - **WebSocket latency** - < 100ms
 - **Bundle size** - Optimisé pour mobile
 
 ### Monitoring en production
+
 - **Error tracking** - Capture des erreurs JavaScript
 - **Performance monitoring** - Métriques de performance
 - **User analytics** - Comportement utilisateur
@@ -475,6 +547,7 @@ GET /api/gamification/stats/:userId
 ## 🚀 Roadmap et évolutions
 
 ### Fonctionnalités futures
+
 - **PWA** - Application web progressive
 - **Push notifications** - Notifications push
 - **Offline support** - Fonctionnement hors ligne
@@ -482,6 +555,7 @@ GET /api/gamification/stats/:userId
 - **Multi-language** - Support multilingue
 
 ### Améliorations techniques
+
 - **Testing** - Tests unitaires et d'intégration
 - **CI/CD** - Pipeline de déploiement
 - **Monitoring** - Monitoring avancé
