@@ -368,9 +368,9 @@ const Dashboard = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {sensors.length > 0 ? (
-            sensors.map((sensor: any) => (
+            sensors.map((sensor: any, index: number) => (
               <Card
-                key={sensor.sensor_id}
+                key={sensor.sensor_id || `sensor-${index}`}
                 variant="glass"
                 padding="md"
                 className={`${!sensor.has_usable_data ? "opacity-60" : ""}`}
