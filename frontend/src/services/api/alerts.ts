@@ -1,21 +1,15 @@
 import { request } from "./client";
+import type { AlertsResponse } from "../../types/api";
 
-/** Alerts API response with pagination and summary stats. */
-export interface AlertsResponse {
-  alerts: any[];
-  pagination: {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-  };
-  stats: { unacknowledged: number; critical: number };
-}
-
-/** Fetch alerts with optional query parameters. Currently returns empty stub. */
+/**
+ * Fetch alerts with optional query parameters.
+ * NOTE: Backend does not expose an alerts endpoint yet; we return a stable stub
+ * to keep the UI functional without 404s.
+ */
 export function getAlerts(
   params: Record<string, string | number | boolean> = {}
 ): Promise<AlertsResponse> {
+  // Dev-time: return empty stable structure. Swap to real request when backend is ready.
   return Promise.resolve({
     alerts: [],
     pagination: { current_page: 1, last_page: 1, per_page: 100, total: 0 },

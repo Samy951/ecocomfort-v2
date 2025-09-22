@@ -40,14 +40,27 @@ export function getDashboardOverview(): Promise<DashboardOverview> {
       active_sensors: 0,
       sensor_uptime: 0,
     },
-    energy: { total_energy_loss_kwh: 0, total_cost: 0, rooms_with_open_doors: 0 },
+    energy: {
+      total_energy_loss_kwh: 0,
+      total_cost: 0,
+      rooms_with_open_doors: 0,
+    },
     alerts: { unacknowledged: 0, critical: 0 },
   });
 }
 
+export interface EnergyAnalyticsResponse {
+  currentLossWatts: number;
+  currentCostPerHour: number;
+  doorOpenDuration: number;
+  indoorTemp: number;
+  outdoorTemp: number;
+  timestamp: string | Date;
+}
+
 /** Fetch current energy analytics used by the live chart. */
-export function getEnergyAnalytics(days: number = 1) {
-  return request<any>(`/dashboard/energy/current`);
+export function getEnergyAnalytics() {
+  return request<EnergyAnalyticsResponse>(`/dashboard/energy/current`);
 }
 
 /** Fetch daily energy series used by the area chart. */

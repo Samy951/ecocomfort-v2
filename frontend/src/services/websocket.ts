@@ -17,6 +17,9 @@ class WebSocketService {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingUserInit: { userId: string; organizationId: string } | null =
     null;
+  private lastUserInit: { userId: string; organizationId: string } | null =
+    null;
+  private shouldReconnect = true;
 
   constructor() {
     // WebSocket activé - backend Socket.IO disponible
@@ -28,7 +31,9 @@ class WebSocketService {
       // URL Socket.IO du backend
       const socketUrl = WS_URL;
 
-      console.log("🔌 Tentative de connexion Socket.IO:", socketUrl);
+      if (import.meta.env.DEV) {
+        console.log("🔌 Tentative de connexion Socket.IO:", socketUrl);
+      }
 
       if (this.isConnecting || this.isConnected) return;
       this.isConnecting = true;
@@ -47,9 +52,12 @@ class WebSocketService {
       });
 
       this.socket.on("connect", () => {
-        console.log("🔌 Socket.IO connecté:", this.socket?.id);
+        if (import.meta.env.DEV) {
+          console.log("🔌 Socket.IO connecté:", this.socket?.id);
+        }
         this.isConnected = true;
         this.isConnecting = false;
+        this.shouldReconnect = true;
         this.reconnectAttempts = 0;
         if (this.reconnectTimer) {
           clearTimeout(this.reconnectTimer);
@@ -57,54 +65,77 @@ class WebSocketService {
         }
         this.notifySubscribers("connected", { socketId: this.socket?.id });
 
-        // Envoyer l'initialisation utilisateur différée si elle existe
+        // Envoyer l'initialisation utilisateur différée si elle existe, sinon réémettre la dernière connue
         if (this.pendingUserInit) {
-          console.log(
-            "👤 Envoi de l'initialisation utilisateur différée:",
-            this.pendingUserInit
-          );
+          if (import.meta.env.DEV) {
+            console.log(
+              "👤 Envoi de l'initialisation utilisateur différée:",
+              this.pendingUserInit
+            );
+          }
           this.emit("user_init", this.pendingUserInit);
+          this.lastUserInit = this.pendingUserInit;
           this.pendingUserInit = null;
+        } else if (this.lastUserInit) {
+          if (import.meta.env.DEV) {
+            console.log(
+              "👤 Ré-émission de l'initialisation utilisateur persistée:",
+              this.lastUserInit
+            );
+          }
+          this.emit("user_init", this.lastUserInit);
         }
       });
 
       this.socket.on("disconnect", (reason) => {
-        console.log("🔌 Socket.IO déconnecté:", reason);
+        if (import.meta.env.DEV) {
+          console.log("🔌 Socket.IO déconnecté:", reason);
+        }
         this.isConnected = false;
         this.notifySubscribers("disconnected", { reason });
-        this.handleReconnect();
+        if (this.shouldReconnect) this.handleReconnect();
       });
 
       this.socket.on("connect_error", (error) => {
         console.error("❌ Erreur connexion Socket.IO:", error);
         this.isConnected = false;
         this.isConnecting = false;
-        this.handleReconnect();
+        if (this.shouldReconnect) this.handleReconnect();
       });
 
       // Écouter les événements spécifiques du backend
       this.socket.on("door-state-changed", (data) => {
-        console.log("🚪 État porte changé:", data);
+        if (import.meta.env.DEV) {
+          console.log("🚪 État porte changé:", data);
+        }
         this.notifySubscribers("door-state-changed", data);
       });
 
       this.socket.on("sensor-data-updated", (data) => {
-        console.log("📊 Données capteur mises à jour:", data);
+        if (import.meta.env.DEV) {
+          console.log("📊 Données capteur mises à jour:", data);
+        }
         this.notifySubscribers("sensor-data-updated", data);
       });
 
       this.socket.on("points-awarded", (data) => {
-        console.log("🏆 Points attribués:", data);
+        if (import.meta.env.DEV) {
+          console.log("🏆 Points attribués:", data);
+        }
         this.notifySubscribers("points-awarded", data);
       });
 
       this.socket.on("badge-awarded", (data) => {
-        console.log("🎖️ Badge attribué:", data);
+        if (import.meta.env.DEV) {
+          console.log("🎖️ Badge attribué:", data);
+        }
         this.notifySubscribers("badge-awarded", data);
       });
 
       this.socket.on("level-up", (data) => {
-        console.log("⬆️ Montée de niveau:", data);
+        if (import.meta.env.DEV) {
+          console.log("⬆️ Montée de niveau:", data);
+        }
         this.notifySubscribers("level-up", data);
       });
     } catch (error) {
@@ -120,9 +151,11 @@ class WebSocketService {
 
       if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
       this.reconnectTimer = setTimeout(() => {
-        console.log(
-          `🔄 Tentative de reconnexion ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
-        );
+        if (import.meta.env.DEV) {
+          console.log(
+            `🔄 Tentative de reconnexion ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
+          );
+        }
         this.connect();
       }, delay);
     } else {
@@ -168,33 +201,42 @@ class WebSocketService {
     if (this.socket && this.isConnected) {
       this.socket.emit(eventType, data);
     } else {
-      console.warn(
-        "⚠️ Socket.IO non connecté, impossible d'émettre:",
-        eventType
-      );
+      if (import.meta.env.DEV) {
+        console.warn(
+          "⚠️ Socket.IO non connecté, impossible d'émettre:",
+          eventType
+        );
+      }
     }
   }
 
   /** Queue or send the user initialization payload when connected. */
   public initializeUser(userId: string, organizationId: string) {
-    console.log(
-      `👤 Initialisation utilisateur: ${userId}, organisation: ${organizationId}`
-    );
+    if (import.meta.env.DEV) {
+      console.log(
+        `👤 Initialisation utilisateur: ${userId}, organisation: ${organizationId}`
+      );
+    }
 
     // Attendre que la connexion soit établie avant d'émettre
     if (this.isConnected && this.socket) {
       this.emit("user_init", { userId, organizationId });
+      this.lastUserInit = { userId, organizationId };
     } else {
-      console.log(
-        "⏳ Connexion Socket.IO en cours, initialisation différée..."
-      );
+      if (import.meta.env.DEV) {
+        console.log(
+          "⏳ Connexion Socket.IO en cours, initialisation différée..."
+        );
+      }
       // Stocker les données utilisateur pour les envoyer une fois connecté
       this.pendingUserInit = { userId, organizationId };
+      this.lastUserInit = { userId, organizationId };
     }
   }
 
   /** Fully tear down the socket connection and timers. */
   public disconnect() {
+    this.shouldReconnect = false;
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;

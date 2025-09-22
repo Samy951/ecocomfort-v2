@@ -89,7 +89,7 @@ const Dashboard = ({
         });
         if (sensorsData) setCurrentSensors(sensorsData);
 
-        const energyData = await DashboardApi.getEnergyAnalytics(1).catch(
+        const energyData = await DashboardApi.getEnergyAnalytics().catch(
           (err) => {
             console.warn("Failed to fetch energy data:", err);
             // Retourner des données par défaut en cas d'erreur backend
