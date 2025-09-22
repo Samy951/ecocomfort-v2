@@ -165,8 +165,8 @@ class ApiService {
   private authToken: string | null = null;
 
   constructor() {
-    // Use relative URL in development to leverage Vite proxy
-    this.baseURL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "/api" : "http://localhost:3000/api");
+    // Always use relative URL in development to leverage Vite proxy
+    this.baseURL = "/api";
     this.authToken = localStorage.getItem("auth_token");
   }
 
