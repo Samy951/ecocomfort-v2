@@ -62,7 +62,7 @@ export default function Login({
   const handleDemoLogin = async () => {
     setFormData({
       email: "admin@ecocomfort.com",
-      password: "EcoAdmin2024!",
+      password: "Admin@123",
     });
     // Trigger form submission after a short delay to show the pre-filled data
     setTimeout(() => {
