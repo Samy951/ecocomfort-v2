@@ -74,7 +74,7 @@ export class DashboardController {
     for (const sensorId of sensorIds) {
       const sensorData = this.ruuviParser.getSensorData(sensorId);
       const isOnline = sensorData?.lastUpdate
-        ? Date.now() - sensorData.lastUpdate.getTime() < 5 * 60 * 1000 // 5 minutes
+        ? Date.now() - sensorData.lastUpdate.getTime() < 24 * 60 * 60 * 1000 // 24 hours
         : false;
 
       const hasUsableData = sensorData && (sensorData.temperature !== null || sensorData.humidity !== null);
