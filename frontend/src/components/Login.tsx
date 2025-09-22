@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Mail, Lock, Leaf, ArrowRight } from "lucide-react";
 import { Button, Card, Input, Typography } from "./ui";
 import apiService from "../services/api";
+import type { User, AppError } from "../types";
 
 interface LoginProps {
-  onLoginSuccess: (token: string, user: any) => void;
+  onLoginSuccess: (token: string, user: User) => void;
   onSwitchToRegister: () => void;
 }
 
@@ -19,7 +20,7 @@ export default function Login({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const safeStoreUser = (user: any) => {
+  const safeStoreUser = (user: User) => {
     try {
       if (typeof window !== "undefined" && "localStorage" in window) {
         const { id, name, email } = user || {};
@@ -48,10 +49,11 @@ export default function Login({
       } else {
         throw new Error("Réponse d'authentification invalide");
       }
-    } catch (err: any) {
-      console.error("Login error:", err);
+    } catch (err: unknown) {
+      const error = err as AppError;
+      console.error("Login error:", error);
       setError(
-        err.message || "Erreur de connexion. Vérifiez vos identifiants."
+        error.message || "Erreur de connexion. Vérifiez vos identifiants."
       );
     } finally {
       setIsLoading(false);
@@ -83,10 +85,11 @@ export default function Login({
       } else {
         throw new Error("Réponse d'authentification invalide");
       }
-    } catch (err: any) {
-      console.error("Demo login error:", err);
+    } catch (err: unknown) {
+      const error = err as AppError;
+      console.error("Demo login error:", error);
       setError(
-        err.message || "Erreur de connexion admin. Vérifiez les credentials."
+        error.message || "Erreur de connexion admin. Vérifiez les credentials."
       );
     } finally {
       setIsLoading(false);

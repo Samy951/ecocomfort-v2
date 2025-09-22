@@ -80,3 +80,96 @@ export interface ApiResponse<T> {
   message?: string;
   success?: boolean;
 }
+
+// WebSocket Event Types
+export interface DoorStateChangedData {
+  sensor_id: string;
+  door_state: boolean;
+  timestamp: string;
+  room_name: string;
+}
+
+export interface SensorDataUpdatedData {
+  sensor_id: string;
+  data: SensorData;
+  timestamp: string;
+}
+
+export interface PointsAwardedData {
+  points: number;
+  reason: string;
+  total_points: number;
+  level: number;
+}
+
+export interface BadgeAwardedData {
+  badge_name: string;
+  badge_description: string;
+  points_awarded: number;
+}
+
+export interface LevelUpData {
+  new_level: number;
+  points_required: number;
+  total_points: number;
+}
+
+export type WebSocketEventData =
+  | DoorStateChangedData
+  | SensorDataUpdatedData
+  | PointsAwardedData
+  | BadgeAwardedData
+  | LevelUpData
+  | { socketId: string }
+  | { reason: string };
+
+// Error Types
+export interface AppError {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
+// History Event Types
+export interface HistoryEvent {
+  id: string;
+  type:
+    | "door_open"
+    | "door_close"
+    | "sensor_alert"
+    | "energy_saving"
+    | "gamification";
+  timestamp: string;
+  description: string;
+  sensor_id?: string;
+  room_name?: string;
+  points_awarded?: number;
+  energy_saved?: number;
+  created_at?: string;
+  severity?: "low" | "medium" | "high" | "critical";
+  message?: string;
+  sensor?: string;
+  room?: string;
+  cost_impact?: number;
+}
+
+// Settings Types
+export interface UserSettings {
+  notifications: {
+    email: boolean;
+    push: boolean;
+    door_alerts: boolean;
+    energy_alerts: boolean;
+  };
+  display: {
+    temperature_unit: "celsius" | "fahrenheit";
+    language: string;
+    theme: "light" | "dark" | "auto";
+  };
+  privacy: {
+    data_sharing: boolean;
+    analytics: boolean;
+  };
+}
+
+export type SettingValue = boolean | string | number;

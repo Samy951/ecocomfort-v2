@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  User,
+  User as UserIcon,
   Mail,
   Building,
   Calendar,
@@ -21,6 +21,7 @@ import {
 import type { GamificationLevel } from "../types";
 import apiService from "../services/api";
 import { Card } from "../components/ui";
+import type { User, AppError } from "../types";
 
 interface ProfileProps {
   userPoints: number;
@@ -66,8 +67,9 @@ const Profile = ({
 
       // Pas de données d'activité - attendre l'implémentation backend
       setActivityData([]);
-    } catch (err: any) {
-      console.error("Erreur lors du chargement du profil:", err);
+    } catch (err: unknown) {
+      const error = err as AppError;
+      console.error("Erreur lors du chargement du profil:", error);
       // En cas d'erreur, garder les valeurs vides
       setActivityData([]);
     } finally {
@@ -106,7 +108,7 @@ const Profile = ({
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-main-green rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-main-black dark:text-main-white" />
+              <UserIcon className="w-8 h-8 text-main-black dark:text-main-white" />
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-main-black dark:text-main-white mb-2">

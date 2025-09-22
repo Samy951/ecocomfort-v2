@@ -222,7 +222,9 @@ class ApiService {
   // Dashboard Overview
   async getDashboardOverview(): Promise<DashboardOverview> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<DashboardOverview>(`${prefix}/dashboard/energy/daily`);
+    return this.makeRequest<DashboardOverview>(
+      `${prefix}/dashboard/energy/daily`
+    );
   }
 
   // Sensor Data
@@ -233,13 +235,53 @@ class ApiService {
     const prefix = this.getEndpointPrefix();
     const url = `${prefix}/dashboard/sensors`;
 
-    if (options?.bypassCache || options?.forceUnique) {
-      // Add timestamp to bypass cache, use forceUnique if provided
-      const timestamp = options.forceUnique || Date.now();
-      return this.makeRequest<CurrentSensorsResponse>(`${url}?t=${timestamp}`);
+    const raw = await this.makeRequest<any>(
+      options?.bypassCache || options?.forceUnique
+        ? `${url}?t=${options.forceUnique || Date.now()}`
+        : url
+    );
+
+    // Normalize backend snake_case to frontend SensorStatus[]
+    const normalizedSensors: SensorStatus[] = [];
+    const backendSensors: any[] = raw?.sensors || [];
+    for (const s of backendSensors) {
+      const isOnline: boolean = !!s?.is_online;
+      const lastUpdateIso: string | undefined = s?.data?.timestamp;
+      const lastUpdate: Date | null = lastUpdateIso
+        ? new Date(lastUpdateIso)
+        : null;
+
+      // temperature entry
+      if (typeof s?.data?.temperature === "number") {
+        normalizedSensors.push({
+          sensorId: s.sensor_id || s.sensorId || "unknown",
+          type: "temperature",
+          value: s.data.temperature,
+          lastUpdate,
+          isOnline,
+        });
+      }
+      // humidity entry
+      if (typeof s?.data?.humidity === "number") {
+        normalizedSensors.push({
+          sensorId: s.sensor_id || s.sensorId || "unknown",
+          type: "humidity",
+          value: s.data.humidity,
+          lastUpdate,
+          isOnline,
+        });
+      }
     }
 
-    return this.makeRequest<CurrentSensorsResponse>(url);
+    const response: CurrentSensorsResponse = {
+      doorOpen: !!raw?.doorOpen,
+      averageTemperature: raw?.averageTemperature ?? null,
+      averageHumidity: raw?.averageHumidity ?? null,
+      sensors: normalizedSensors,
+      timestamp: raw?.timestamp ? new Date(raw.timestamp) : new Date(),
+    };
+
+    return response;
   }
 
   // Alerts
@@ -269,7 +311,9 @@ class ApiService {
   // Energy Analytics
   async getEnergyAnalytics(days: number = 7): Promise<EnergyAnalytics> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<EnergyAnalytics>(`${prefix}/dashboard/energy/current`);
+    return this.makeRequest<EnergyAnalytics>(
+      `${prefix}/dashboard/energy/current`
+    );
   }
 
   // Room Details
@@ -610,9 +654,12 @@ class ApiService {
     valid: boolean;
     message: string;
   }> {
-    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/validate-position`, {
-      method: "POST",
-    });
+    return this.makeRequest(
+      `/sensors/${encodeURIComponent(sensorId)}/validate-position`,
+      {
+        method: "POST",
+      }
+    );
   }
 
   async getCalibrationHistory(
@@ -653,7 +700,9 @@ class ApiService {
     if (params.from) queryParams.append("from", params.from);
     if (params.to) queryParams.append("to", params.to);
 
-    const endpoint = `/sensors/${encodeURIComponent(sensorId)}/calibration/history${
+    const endpoint = `/sensors/${encodeURIComponent(
+      sensorId
+    )}/calibration/history${
       queryParams.toString() ? "?" + queryParams.toString() : ""
     }`;
     return this.makeRequest(endpoint);
@@ -674,13 +723,16 @@ class ApiService {
       confirmation_id: string;
     };
   }> {
-    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/confirm-door-state`, {
-      method: "POST",
-      body: JSON.stringify({
-        state,
-        notes: notes || undefined,
-      }),
-    });
+    return this.makeRequest(
+      `/sensors/${encodeURIComponent(sensorId)}/confirm-door-state`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          state,
+          notes: notes || undefined,
+        }),
+      }
+    );
   }
 
   async getDoorStateConfirmationHistory(sensorId: string): Promise<{
@@ -704,7 +756,9 @@ class ApiService {
       };
     }>;
   }> {
-    return this.makeRequest(`/sensors/${encodeURIComponent(sensorId)}/confirmation-history`);
+    return this.makeRequest(
+      `/sensors/${encodeURIComponent(sensorId)}/confirmation-history`
+    );
   }
 
   // Events/Alerts methods
@@ -738,6 +792,46 @@ class ApiService {
       queryParams.toString() ? "?" + queryParams.toString() : ""
     }`;
     return this.makeRequest<EventsResponse>(endpoint);
+  }
+
+  // Normalized history events for UI
+  async getHistoryEvents(params: Parameters<ApiService["getEvents"]>[0] = {}) {
+    try {
+      const data = await this.getEvents(params);
+      const events = (data.events || []).map((e) => ({
+        id: e.id,
+        type: e.type,
+        // map severity: info->low, warning->medium, critical->critical
+        severity:
+          e.severity === "info"
+            ? "low"
+            : e.severity === "warning"
+            ? "medium"
+            : "critical",
+        message: e.message,
+        cost_impact: e.cost_impact,
+        acknowledged: e.acknowledged,
+        timestamp: e.created_at,
+        created_at: e.created_at,
+        sensor: e.sensor?.name,
+        room: e.room?.name,
+      }));
+      return events;
+    } catch {
+      // Fallback: no events if endpoint missing
+      return [] as Array<{
+        id: string;
+        type: string;
+        severity: "low" | "medium" | "high" | "critical";
+        message: string;
+        cost_impact?: number;
+        acknowledged?: boolean;
+        timestamp?: string;
+        created_at?: string;
+        sensor?: string;
+        room?: string;
+      }>;
+    }
   }
 }
 

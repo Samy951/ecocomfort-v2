@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import apiService from "../services/api";
 import { Card } from "../components/ui";
+import type { User, DashboardData, Sensor, AppError } from "../types";
 
 const Admin = () => {
   const [loading, setLoading] = useState(true);
@@ -41,12 +42,13 @@ const Admin = () => {
       setStats({
         totalSensors: sensorsData.sensors?.length || 0,
         activeSensors:
-          sensorsData.sensors?.filter((s: any) => s.is_online).length || 0,
+          sensorsData.sensors?.filter((s) => s.isOnline).length || 0,
         totalRooms: overviewData.infrastructure?.total_rooms || 0,
         totalBuildings: overviewData.infrastructure?.total_buildings || 0,
       });
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des données admin");
+    } catch (err: unknown) {
+      const error = err as AppError;
+      setError(error.message || "Erreur lors du chargement des données admin");
     } finally {
       setLoading(false);
     }

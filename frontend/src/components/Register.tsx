@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Mail, Lock, User, Building, Leaf, ArrowRight } from "lucide-react";
 import { Button, Card, Input, Typography } from "./ui";
 import apiService from "../services/api";
+import type { User as UserType, AppError } from "../types";
 
 interface RegisterProps {
-  onRegisterSuccess: (token: string, user: any) => void;
+  onRegisterSuccess: (token: string, user: UserType) => void;
   onSwitchToLogin: () => void;
 }
 
@@ -56,9 +57,10 @@ export default function Register({
       } else {
         throw new Error("Réponse d'inscription invalide");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as AppError;
       console.error("Register error:", err);
-      setError(err.message || "Erreur d'inscription. Veuillez réessayer.");
+      setError(error.message || "Erreur d'inscription. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }

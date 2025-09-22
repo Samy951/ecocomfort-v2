@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Settings, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 import apiService from "../services/api";
+import type { AppError } from "../types";
 import { Card } from "./ui";
 
 interface CalibrationModalProps {
@@ -60,9 +61,10 @@ const CalibrationModal: React.FC<CalibrationModalProps> = ({
         setStatus("error");
         setMessage(result.message || "Erreur lors de la calibration");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const appError = error as AppError;
       setStatus("error");
-      setMessage(error.message || "Erreur lors de la calibration");
+      setMessage(appError.message || "Erreur lors de la calibration");
     } finally {
       setIsLoading(false);
     }

@@ -25,7 +25,19 @@ import {
 import webSocketService from "../services/websocket";
 import Gamification from "../components/Gamification";
 import apiService from "../services/api";
-import type { GamificationLevel } from "../types";
+import type {
+  GamificationLevel,
+  User,
+  DashboardData,
+  DailyReport,
+  GamificationStats,
+  Sensor,
+  AppError,
+  DoorStateChangedData,
+  SensorDataUpdatedData,
+  PointsAwardedData,
+  LevelUpData,
+} from "../types";
 import { Card, Typography, Button } from "../components/ui";
 
 interface DashboardProps {
@@ -96,14 +108,16 @@ const Dashboard = ({
         if (dailyData) setDailyReport(dailyData);
 
         // Note: gamificationData sera géré par le composant parent (App.tsx)
-      } catch (err: any) {
-        console.warn("Error loading individual data:", err);
+      } catch (err: unknown) {
+        const error = err as AppError;
+        console.warn("Error loading individual data:", error);
       }
 
       setLastUpdate(new Date());
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as AppError;
       setError("Erreur lors du chargement des données");
-      console.error("Error loading data:", err);
+      console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
@@ -144,32 +158,28 @@ const Dashboard = ({
 
     const unsubscribeDoorState = webSocketService.on(
       "door-state-changed",
-      (event: any) => {
-        console.log("🚪 Door state changed:", event);
+      (_event: DoorStateChangedData) => {
         loadAllData();
       }
     );
 
     const unsubscribeSensorData = webSocketService.on(
       "sensor-data-updated",
-      (event: any) => {
-        console.log("📊 Sensor data updated:", event);
+      (_event: SensorDataUpdatedData) => {
         loadAllData();
       }
     );
 
     const unsubscribePointsAwarded = webSocketService.on(
       "points-awarded",
-      (event: any) => {
-        console.log("🏆 Points awarded:", event);
+      (_event: PointsAwardedData) => {
         // TODO: Mettre à jour les points utilisateur
       }
     );
 
     const unsubscribeLevelUp = webSocketService.on(
       "level-up",
-      (event: any) => {
-        console.log("⬆️ Level up:", event);
+      (_event: LevelUpData) => {
         // TODO: Mettre à jour le niveau utilisateur
       }
     );
@@ -394,20 +404,20 @@ const Dashboard = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {sensors.length > 0 ? (
-            sensors.map((sensor: any, index: number) => (
+            sensors.map((sensor, index: number) => (
               <Card
-                key={sensor.sensor_id || `sensor-${index}`}
+                key={`${sensor.sensorId}-${sensor.type}-${index}`}
                 variant="glass"
                 padding="md"
-                className={`${!sensor.has_usable_data ? "opacity-60" : ""}`}
+                className={`${!sensor.isOnline ? "opacity-60" : ""}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <Typography variant="h5" color="main-white">
-                      {sensor.name}
+                      {sensor.sensorId}
                     </Typography>
                     <Typography variant="paragraph-small" color="medium-grey">
-                      {sensor.room?.name || "Salle inconnue"}
+                      {sensor.type || "Type inconnu"}
                     </Typography>
                   </div>
                   <div className="flex items-center gap-2">
@@ -422,26 +432,24 @@ const Dashboard = ({
                   </div>
                 </div>
 
-                {sensor.has_usable_data ? (
+                {sensor.isOnline ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Thermometer className="w-4 h-4 text-main-green" />
                       <Typography variant="paragraph-small">
-                        Température:{" "}
-                        {sensor.data?.temperature?.toFixed(1) || "N/A"}°C
+                        Température: {sensor.value?.toFixed(1) || "N/A"}°C
                       </Typography>
                     </div>
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Droplets className="w-4 h-4 text-info" />
                       <Typography variant="paragraph-small">
-                        Humidité: {sensor.data?.humidity?.toFixed(1) || "N/A"}%
+                        Humidité: {sensor.value?.toFixed(1) || "N/A"}%
                       </Typography>
                     </div>
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Zap className="w-4 h-4 text-warning" />
                       <Typography variant="paragraph-small">
-                        Perte Énergétique:{" "}
-                        {sensor.data?.energy_loss_watts?.toFixed(2) || "N/A"} W
+                        Perte Énergétique: {sensor.value?.toFixed(2) || "N/A"} W
                       </Typography>
                     </div>
                   </div>

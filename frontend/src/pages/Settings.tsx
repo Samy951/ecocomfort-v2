@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { Card } from "../components/ui";
+import type { User, UserSettings, SettingValue, AppError } from "../types";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -65,12 +66,18 @@ const Settings = () => {
       ...prev,
       [category]: {
         ...prev[category as keyof typeof prev],
-        [key]: !(prev[category as keyof typeof prev] as any)[key],
+        [key]: !(
+          prev[category as keyof typeof prev] as Record<string, boolean>
+        )[key],
       },
     }));
   };
 
-  const updateSetting = (category: string, key: string, value: any) => {
+  const updateSetting = (
+    category: string,
+    key: string,
+    value: SettingValue
+  ) => {
     setSettings((prev) => ({
       ...prev,
       [category]: {

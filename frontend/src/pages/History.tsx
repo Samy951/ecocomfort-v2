@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Zap,
 } from "lucide-react";
+import type { HistoryEvent, AppError } from "../types";
 import {
   LineChart,
   Line,
@@ -22,7 +23,7 @@ import { Card } from "../components/ui";
 
 const History = () => {
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<HistoryEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,14 +34,15 @@ const History = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getEvents({
+      const events = await apiService.getHistoryEvents({
         limit: 100,
         start_date: getStartDate(),
         end_date: new Date().toISOString(),
       });
-      setEvents(data.events || []);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement de l'historique");
+      setEvents(events as unknown as HistoryEvent[]);
+    } catch (err: unknown) {
+      const error = err as AppError;
+      setError(error.message || "Erreur lors du chargement de l'historique");
     } finally {
       setLoading(false);
     }
@@ -96,7 +98,7 @@ const History = () => {
       date.setDate(date.getDate() - i);
 
       const dayEvents = events.filter((event) => {
-        const eventDate = new Date(event.created_at);
+        const eventDate = new Date(event.created_at || event.timestamp);
         return eventDate.toDateString() === date.toDateString();
       });
 
@@ -107,8 +109,12 @@ const History = () => {
         }),
         events: dayEvents.length,
         critical: dayEvents.filter((e) => e.severity === "critical").length,
-        warning: dayEvents.filter((e) => e.severity === "warning").length,
-        info: dayEvents.filter((e) => e.severity === "info").length,
+        warning: dayEvents.filter(
+          (e) => e.severity === "high" || e.severity === "critical"
+        ).length,
+        info: dayEvents.filter(
+          (e) => e.severity === "low" || e.severity === "medium"
+        ).length,
       });
     }
 
@@ -168,7 +174,9 @@ const History = () => {
           <div className="flex items-center gap-4">
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
+              onChange={(e) =>
+                setTimeRange(e.target.value as "24h" | "7d" | "30d")
+              }
               className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-main-black dark:text-main-white"
             >
               <option value="24h">24 heures</option>
@@ -204,7 +212,11 @@ const History = () => {
         </Card>
         <Card variant="glass" padding="md" className="text-center">
           <div className="text-3xl font-bold text-warning mb-2">
-            {events.filter((e) => e.severity === "warning").length}
+            {
+              events.filter(
+                (e) => e.severity === "high" || e.severity === "critical"
+              ).length
+            }
           </div>
           <div className="text-main-black/70 dark:text-main-white/70">
             Avertissements
@@ -212,7 +224,11 @@ const History = () => {
         </Card>
         <Card variant="glass" padding="md" className="text-center">
           <div className="text-3xl font-bold text-info mb-2">
-            {events.filter((e) => e.severity === "info").length}
+            {
+              events.filter(
+                (e) => e.severity === "low" || e.severity === "medium"
+              ).length
+            }
           </div>
           <div className="text-main-black/70 dark:text-main-white/70">
             Informations
@@ -283,13 +299,13 @@ const History = () => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    {getSeverityIcon(event.severity)}
+                    {getSeverityIcon(event.severity || "low")}
                     <div>
                       <div className="font-medium text-main-black dark:text-main-white">
                         {event.message}
                       </div>
                       <div className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
-                        {event.sensor?.name} - {event.room?.name}
+                        {event.sensor} - {event.room}
                       </div>
                       {event.cost_impact && (
                         <div className="text-sm text-warning mt-1">
@@ -300,12 +316,16 @@ const History = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-main-black/70 dark:text-main-white/70">
-                      {new Date(event.created_at).toLocaleString("fr-FR")}
+                      {new Date(
+                        event.created_at || event.timestamp
+                      ).toLocaleString("fr-FR")}
                     </div>
                     <div
-                      className={`text-xs ${getSeverityColor(event.severity)}`}
+                      className={`text-xs ${getSeverityColor(
+                        event.severity || "low"
+                      )}`}
                     >
-                      {event.severity.toUpperCase()}
+                      {(event.severity || "low").toUpperCase()}
                     </div>
                   </div>
                 </div>

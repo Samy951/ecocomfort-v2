@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import Login from "./Login";
 import Register from "./Register";
+import type { User } from "../types";
 
 interface AuthWrapperProps {
-  onAuthSuccess: (token: string, user: any) => void;
+  onAuthSuccess: (token: string, user: User) => void;
 }
 
 export default function AuthWrapper({ onAuthSuccess }: AuthWrapperProps) {
   const [isLoginMode, setIsLoginMode] = useState(true);
 
-  const handleLoginSuccess = (token: string, user: any) => {
+  const handleLoginSuccess = (token: string, user: User) => {
     onAuthSuccess(token, user);
   };
 
-  const handleRegisterSuccess = (token: string, user: any) => {
+  const handleRegisterSuccess = (token: string, user: User) => {
     onAuthSuccess(token, user);
   };
 

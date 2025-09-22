@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import AuthWrapper from "./components/AuthWrapper";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Admin from "./pages/Admin";
+import { lazy, Suspense } from "react";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Admin = lazy(() => import("./pages/Admin"));
 import webSocketService from "./services/websocket";
 import apiService from "./services/api";
 import type { GamificationLevel } from "./types";
@@ -140,30 +141,32 @@ function App() {
         userLevel={currentUser.level}
         onLogout={handleLogout}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Dashboard
-                setIsConnected={setIsConnected}
-                gamification={gamification}
-                currentUser={currentUser}
-              />
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <Profile
-                userPoints={currentUser.points}
-                userLevel={currentUser.level}
-                gamificationLevel={gamification}
-              />
-            }
-          />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/admin" element={<Admin />} />
-        </Routes>
+        <Suspense fallback={<div className="p-6">Chargement...</div>}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Dashboard
+                  setIsConnected={setIsConnected}
+                  gamification={gamification}
+                  currentUser={currentUser}
+                />
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <Profile
+                  userPoints={currentUser.points}
+                  userLevel={currentUser.level}
+                  gamificationLevel={gamification}
+                />
+              }
+            />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </Router>
   );

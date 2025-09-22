@@ -1,5 +1,7 @@
 import React from "react";
 
+type VariantTag = "h1" | "h2" | "h3" | "h4" | "h5" | "p" | "span";
+
 export interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
   variant?:
     | "h1"
@@ -90,7 +92,7 @@ const Typography: React.FC<TypographyProps> = ({
     }
   };
 
-  const getTag = () => {
+  const getTag = (): VariantTag => {
     switch (variant) {
       case "h1":
         return "h1";
@@ -111,14 +113,15 @@ const Typography: React.FC<TypographyProps> = ({
     }
   };
 
-  const Tag = getTag() as keyof React.JSX.IntrinsicElements;
+  const Tag = getTag();
+  type PropsForTag = React.ComponentPropsWithoutRef<typeof Tag>;
   const variantClasses = getVariantClasses();
   const colorClasses = getColorClasses();
 
   return (
     <Tag
       className={`${variantClasses} ${colorClasses} ${className}`}
-      {...(props as any)}
+      {...(props as PropsForTag)}
     >
       {children}
     </Tag>
