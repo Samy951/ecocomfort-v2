@@ -440,9 +440,7 @@ class ApiService {
   }
 
   async logout(): Promise<void> {
-    await this.makeRequest<{ message: string }>("/auth/logout", {
-      method: "POST",
-    });
+    // Backend doesn't have logout endpoint, just clear local auth
     this.clearAuthToken();
   }
 

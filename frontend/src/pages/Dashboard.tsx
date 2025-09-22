@@ -45,7 +45,7 @@ const Dashboard = ({
     averageHumidity: number | null;
     sensors: Array<{
       sensorId: string;
-      type: 'temperature' | 'humidity' | 'pressure';
+      type: "temperature" | "humidity" | "pressure";
       value: number | null;
       lastUpdate: Date | null;
       isOnline: boolean;
@@ -64,21 +64,37 @@ const Dashboard = ({
     setError(null);
 
     try {
-      const [sensorsData, energyData, dailyData, gamificationData] =
-        await Promise.all([
-          apiService.getSensorData(),
-          apiService.getEnergyAnalytics(1),
-          apiService.getDashboardOverview(),
-          apiService.getGamificationData(),
-        ]);
+      // Try to fetch data, but handle errors gracefully
+      const promises = [
+        apiService.getSensorData().catch(err => {
+          console.warn("Failed to fetch sensor data:", err);
+          return null;
+        }),
+        apiService.getEnergyAnalytics(1).catch(err => {
+          console.warn("Failed to fetch energy data:", err);
+          return null;
+        }),
+        apiService.getDashboardOverview().catch(err => {
+          console.warn("Failed to fetch dashboard overview:", err);
+          return null;
+        }),
+        apiService.getGamificationData().catch(err => {
+          console.warn("Failed to fetch gamification data:", err);
+          return null;
+        }),
+      ];
 
-      setCurrentSensors(sensorsData);
-      setCurrentEnergy(energyData);
-      setDailyReport(dailyData);
-      setGamificationStats(gamificationData);
+      const [sensorsData, energyData, dailyData, gamificationData] =
+        await Promise.all(promises);
+
+      if (sensorsData) setCurrentSensors(sensorsData);
+      if (energyData) setCurrentEnergy(energyData);
+      if (dailyData) setDailyReport(dailyData);
+      if (gamificationData) setGamificationStats(gamificationData);
+      
       setLastUpdate(new Date());
     } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des données");
+      setError("Erreur lors du chargement des données");
       console.error("Error loading data:", err);
     } finally {
       setLoading(false);
@@ -180,13 +196,15 @@ const Dashboard = ({
   }
 
   const sensors = currentSensors?.sensors || [];
-  const temperatureSensors = sensors.filter(s => s.type === 'temperature' && s.value !== null);
+  const temperatureSensors = sensors.filter(
+    (s) => s.type === "temperature" && s.value !== null
+  );
   const averageTemperature = currentSensors?.averageTemperature || 0;
   const doorsOpenCount = currentSensors?.doorOpen ? 1 : 0;
 
   const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
 
-  const activeSensors = sensors.filter(s => s.isOnline).length;
+  const activeSensors = sensors.filter((s) => s.isOnline).length;
   const totalSensors = sensors.length;
 
   return (
