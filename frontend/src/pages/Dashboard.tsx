@@ -107,14 +107,14 @@ const Dashboard = ({
 
   useEffect(() => {
     // Only start auto-refresh if we have some data loaded
-    if (currentSensors.length > 0 || currentEnergy || dailyReport) {
+    if ((currentSensors?.sensors?.length || 0) > 0 || currentEnergy || dailyReport) {
       const interval = setInterval(() => {
         loadAllData();
       }, 60000); // Increased to 60 seconds to reduce API calls
 
       return () => clearInterval(interval);
     }
-  }, [loadAllData, currentSensors?.length || 0, currentEnergy, dailyReport]);
+  }, [loadAllData, currentSensors?.sensors?.length || 0, currentEnergy, dailyReport]);
 
   useEffect(() => {
     const unsubscribeConnected = webSocketService.on("connected", () => {
