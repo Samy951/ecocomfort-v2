@@ -67,7 +67,7 @@ export class DashboardController {
     const averageTemperature = this.ruuviParser.getAverageIndoorTemperature();
     const averageHumidity = this.ruuviParser.getAverageIndoorHumidity();
 
-    // Build sensor details grouped by physical sensor
+    // Build sensor details in frontend expected format
     const sensorIds = ['944372022', '422801533', '1947698524'];
     const sensors: any[] = [];
 
@@ -77,26 +77,46 @@ export class DashboardController {
         ? Date.now() - sensorData.lastUpdate.getTime() < 24 * 60 * 60 * 1000 // 24 hours
         : false;
 
-      const hasUsableData = sensorData && (sensorData.temperature !== null || sensorData.humidity !== null);
+      // Create separate entries for each measurement type per sensor
+      // Temperature entry
+      if (sensorData?.temperature !== null && sensorData?.temperature !== undefined) {
+        sensors.push({
+          sensorId: `${sensorId}-temp`,
+          type: 'temperature',
+          value: sensorData.temperature,
+          lastUpdate: sensorData.lastUpdate,
+          isOnline: isOnline,
+        });
+      }
 
-      // Create a grouped sensor object matching frontend expectations
-      sensors.push({
-        sensor_id: sensorId,
-        name: `Capteur ${sensorId.slice(-3)}`, // Use last 3 digits for display
-        room: {
-          name: 'Salle inconnue',
-          building_name: 'Bâtiment principal',
-        },
-        data: {
-          timestamp: sensorData?.lastUpdate?.toISOString() || new Date().toISOString(),
-          temperature: sensorData?.temperature || null,
-          humidity: sensorData?.humidity || null,
-          door_state: false,
-          energy_loss_watts: 0,
-        },
-        is_online: isOnline,
-        has_usable_data: hasUsableData,
-      });
+      // Humidity entry
+      if (sensorData?.humidity !== null && sensorData?.humidity !== undefined) {
+        sensors.push({
+          sensorId: `${sensorId}-hum`,
+          type: 'humidity',
+          value: sensorData.humidity,
+          lastUpdate: sensorData.lastUpdate,
+          isOnline: isOnline,
+        });
+      }
+
+      // If sensor has no data, still add entries with null values
+      if (!sensorData || (sensorData.temperature === null && sensorData.humidity === null)) {
+        sensors.push({
+          sensorId: `${sensorId}-temp`,
+          type: 'temperature',
+          value: null,
+          lastUpdate: null,
+          isOnline: false,
+        });
+        sensors.push({
+          sensorId: `${sensorId}-hum`,
+          type: 'humidity',
+          value: null,
+          lastUpdate: null,
+          isOnline: false,
+        });
+      }
     }
 
     return {
@@ -267,6 +287,54 @@ export class DashboardController {
     return {
       data,
       pagination,
+    };
+  }
+
+  @Get('alerts')
+  @ApiOperation({ summary: 'Get alerts (mock endpoint)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'severity',
+    required: false,
+    description: 'Filter by severity',
+  })
+  @ApiQuery({
+    name: 'acknowledged',
+    required: false,
+    description: 'Filter by acknowledged status',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Alerts list (currently mock data)',
+  })
+  async getAlerts(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('severity') severity?: string,
+    @Query('acknowledged') acknowledged?: boolean,
+  ): Promise<any> {
+    // Mock endpoint - returns empty data
+    return {
+      alerts: [],
+      pagination: {
+        current_page: page || 1,
+        last_page: 1,
+        per_page: limit || 20,
+        total: 0,
+      },
+      stats: {
+        unacknowledged: 0,
+        critical: 0,
+      },
     };
   }
 

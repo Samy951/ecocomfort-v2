@@ -3,10 +3,21 @@ import { GamificationService } from './gamification.service';
 import { GamificationStatsDto } from './dto/gamification-stats.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller('api/gamification')
+@Controller('gamification')
 @UseGuards(JwtAuthGuard)
 export class GamificationController {
   constructor(private readonly gamificationService: GamificationService) {}
+
+  @Get('stats')
+  async getCurrentUserStats(): Promise<any> {
+    // Mock endpoint for current user gamification stats
+    return {
+      level: 1,
+      points: 0,
+      badges: [],
+      achievements: {},
+    };
+  }
 
   @Get('stats/:userId')
   async getStats(@Param('userId') userId: string): Promise<GamificationStatsDto> {
