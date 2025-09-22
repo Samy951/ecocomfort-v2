@@ -25,37 +25,30 @@ function App() {
 
   const fetchGamificationData = useCallback(async () => {
     try {
-      // Try to fetch gamification data
+      // Essayer de récupérer les données de gamification du backend
       const gamificationData = await apiService.getGamificationData();
       setGamification({
-        current_level: 1, // Convert string level to number
-        next_level: 2, // Default next level
+        current_level: gamificationData.level || 1,
+        next_level: (gamificationData.level || 1) + 1,
         total_points: gamificationData.points || 0,
-        points_for_current: 0,
-        points_for_next: 100,
-        points_to_next: 100,
-        progress_percent: 0,
-        is_max_level: false,
+        points_for_current: 0, // Sera calculé par le backend
+        points_for_next: 100, // Sera calculé par le backend
+        points_to_next: 100, // Sera calculé par le backend
+        progress_percent: 0, // Sera calculé par le backend
+        is_max_level: false, // Sera déterminé par le backend
       });
     } catch (gamificationError) {
       console.warn("Failed to fetch gamification data:", gamificationError);
-      // Set default gamification data
-      setGamification({
-        current_level: 1, // Default level as number
-        next_level: 2,
-        total_points: 0,
-        points_for_current: 0,
-        points_for_next: 100,
-        points_to_next: 100,
-        progress_percent: 0,
-        is_max_level: false,
-      });
+      // Pas de données par défaut - laisser null jusqu'à ce que le backend soit prêt
+      setGamification(null);
     }
   }, []);
 
   const handleAuthSuccess = useCallback(
     (token: string, user: { id: string; name: string; email: string }) => {
       apiService.setAuthToken(token);
+      localStorage.setItem("auth_token", token); // Persist token
+      localStorage.setItem("user_data", JSON.stringify(user)); // Persist user data
       setCurrentUser({
         id: user.id,
         name: user.name,

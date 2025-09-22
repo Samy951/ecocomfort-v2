@@ -363,13 +363,9 @@ class ApiService {
     achievements: Record<string, unknown>;
   }> {
     const prefix = this.getEndpointPrefix();
-    // Pour l'instant, retournons des données par défaut car l'endpoint nécessite un userId
-    return {
-      level: 1,
-      points: 0,
-      badges: [],
-      achievements: {},
-    };
+    // TODO: Implémenter l'endpoint de gamification dans le backend
+    // Pour l'instant, retourner une erreur pour éviter les données factices
+    throw new Error("Gamification endpoint not implemented yet");
   }
 
   // Set authentication token

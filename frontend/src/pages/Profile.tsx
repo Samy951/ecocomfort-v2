@@ -55,31 +55,21 @@ const Profile = ({
   const loadUserData = async () => {
     try {
       setLoading(true);
-      const userData = await apiService.getUserProfile();
+      // Note: getUserProfile n'existe pas encore dans le backend
+      // Utilisons les données disponibles depuis les props
       setUserInfo({
-        name: userData.name,
-        email: userData.email,
+        name: "Utilisateur", // Sera remplacé par les vraies données quand l'API sera disponible
+        email: "user@example.com",
         organization: "EcoComfort",
         joinDate: "2024-01-15",
       });
 
-      // Générer des données d'activité simulées
-      const today = new Date();
-      const activity = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
-        activity.push({
-          date: date.toLocaleDateString("fr-FR", {
-            month: "short",
-            day: "numeric",
-          }),
-          points: Math.floor(Math.random() * 50) + 10,
-          energy_saved: Math.floor(Math.random() * 100) + 20,
-        });
-      }
-      setActivityData(activity);
+      // Pas de données d'activité factices - attendre l'implémentation backend
+      setActivityData([]);
     } catch (err: any) {
       console.error("Erreur lors du chargement du profil:", err);
+      // En cas d'erreur, garder les valeurs par défaut
+      setActivityData([]);
     } finally {
       setLoading(false);
     }

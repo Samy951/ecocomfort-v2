@@ -54,7 +54,6 @@ const Dashboard = ({
   } | null>(null);
   const [currentEnergy, setCurrentEnergy] = useState<any>(null);
   const [dailyReport, setDailyReport] = useState<any>(null);
-  const [gamificationStats, setGamificationStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -64,33 +63,30 @@ const Dashboard = ({
     setError(null);
 
     try {
-      // Try to fetch data, but handle errors gracefully
-      const promises = [
-        apiService.getSensorData().catch(err => {
+      // Charger les données séparément pour éviter les conflits de types
+      try {
+        const sensorsData = await apiService.getSensorData().catch(err => {
           console.warn("Failed to fetch sensor data:", err);
           return null;
-        }),
-        apiService.getEnergyAnalytics(1).catch(err => {
+        });
+        if (sensorsData) setCurrentSensors(sensorsData);
+
+        const energyData = await apiService.getEnergyAnalytics(1).catch(err => {
           console.warn("Failed to fetch energy data:", err);
           return null;
-        }),
-        apiService.getDashboardOverview().catch(err => {
+        });
+        if (energyData) setCurrentEnergy(energyData);
+
+        const dailyData = await apiService.getDashboardOverview().catch(err => {
           console.warn("Failed to fetch dashboard overview:", err);
           return null;
-        }),
-        apiService.getGamificationData().catch(err => {
-          console.warn("Failed to fetch gamification data:", err);
-          return null;
-        }),
-      ];
+        });
+        if (dailyData) setDailyReport(dailyData);
 
-      const [sensorsData, energyData, dailyData, gamificationData] =
-        await Promise.all(promises);
-
-      if (sensorsData) setCurrentSensors(sensorsData);
-      if (energyData) setCurrentEnergy(energyData);
-      if (dailyData) setDailyReport(dailyData);
-      if (gamificationData) setGamificationStats(gamificationData);
+        // Note: gamificationData sera géré par le composant parent (App.tsx)
+      } catch (err: any) {
+        console.warn("Error loading individual data:", err);
+      }
       
       setLastUpdate(new Date());
     } catch (err: any) {
@@ -149,26 +145,14 @@ const Dashboard = ({
     };
   }, [setIsConnected, loadAllData]);
 
-  const generateChartData = useCallback(() => {
-    const data = [];
-    const now = new Date();
-    for (let i = 0; i < 24; i++) {
-      const hour = (now.getHours() - i + 24) % 24;
-      data.unshift({
-        name: `${hour}h`,
-        temperature: 20 + Math.random() * 2 - 1,
-        humidity: 60 + Math.random() * 5 - 2.5,
-        energyLoss: 50 + Math.random() * 10 - 5,
-      });
-    }
-    return data;
-  }, []);
+  // Pas de données factices - utiliser les vraies données du backend
+  const [chartData, setChartData] = useState([]);
 
-  const [chartData, setChartData] = useState(generateChartData());
-
+  // Les graphiques seront alimentés par les vraies données quand disponibles
   useEffect(() => {
-    setChartData(generateChartData());
-  }, [generateChartData]);
+    // TODO: Remplacer par les vraies données du backend
+    setChartData([]);
+  }, [currentSensors, currentEnergy]);
 
   if (loading) {
     return (
