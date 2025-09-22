@@ -381,7 +381,7 @@ const Dashboard = ({
                       {sensor.name}
                     </Typography>
                     <Typography variant="paragraph-small" color="medium-grey">
-                      {sensor.room.name}
+                      {sensor.room?.name || "Salle inconnue"}
                     </Typography>
                   </div>
                   <div className="flex items-center gap-2">
