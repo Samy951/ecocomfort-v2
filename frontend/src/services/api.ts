@@ -216,9 +216,7 @@ class ApiService {
   // Dashboard Overview
   async getDashboardOverview(): Promise<DashboardOverview> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<DashboardOverview>(
-      `${prefix}/api/energy/daily`
-    );
+    return this.makeRequest<DashboardOverview>(`${prefix}/api/energy/daily`);
   }
 
   // Sensor Data
@@ -265,16 +263,14 @@ class ApiService {
   // Energy Analytics
   async getEnergyAnalytics(days: number = 7): Promise<EnergyAnalytics> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<EnergyAnalytics>(
-      `${prefix}/api/energy/current`
-    );
+    return this.makeRequest<EnergyAnalytics>(`${prefix}/api/energy/current`);
   }
 
   // Room Details
   async getRoomDetails(roomId: string): Promise<{
     id: string;
     name: string;
-    sensors: SensorInfo[];
+    sensors: SensorStatus[];
     energy_data: {
       total_energy_loss_kwh: number;
       total_cost: number;
@@ -300,7 +296,7 @@ class ApiService {
       energy_loss_watts?: number;
       door_state?: boolean;
     }>;
-    sensor: SensorInfo;
+    sensor: SensorStatus;
   }> {
     const queryParams = new URLSearchParams();
 
@@ -327,7 +323,7 @@ class ApiService {
       status?: "active" | "inactive" | "offline";
     } = {}
   ): Promise<{
-    sensors: SensorInfo[];
+    sensors: SensorStatus[];
     pagination: {
       current_page: number;
       total_pages: number;
@@ -747,8 +743,8 @@ const apiService = new ApiService();
 export default apiService;
 export type {
   DashboardOverview,
-  SensorDataResponse,
-  SensorInfo,
+  CurrentSensorsResponse,
+  SensorStatus,
   AlertsResponse,
   Alert,
   EnergyAnalytics,
