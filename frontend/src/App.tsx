@@ -31,11 +31,11 @@ function App() {
         current_level: gamificationData.level || 1,
         next_level: (gamificationData.level || 1) + 1,
         total_points: gamificationData.points || 0,
-        points_for_current: 0, // Sera calculé par le backend
-        points_for_next: 100, // Sera calculé par le backend
-        points_to_next: 100, // Sera calculé par le backend
-        progress_percent: 0, // Sera calculé par le backend
-        is_max_level: false, // Sera déterminé par le backend
+        points_for_current: 0, // TODO: Ajouter au backend
+        points_for_next: 100, // TODO: Ajouter au backend
+        points_to_next: 100, // TODO: Ajouter au backend
+        progress_percent: 0, // TODO: Ajouter au backend
+        is_max_level: false, // TODO: Ajouter au backend
       });
     } catch (gamificationError) {
       console.warn("Failed to fetch gamification data:", gamificationError);
@@ -52,9 +52,9 @@ function App() {
       setCurrentUser({
         id: user.id,
         name: user.name,
-        points: 0, // Default points
-        level: 1, // Default level
-        organizationId: "1", // Default organization ID
+        points: 0, // TODO: Ajouter au backend
+        level: 1, // TODO: Ajouter au backend
+        organizationId: "", // TODO: Ajouter au backend
       });
       // Try to fetch gamification data only (no need to fetch user profile again)
       fetchGamificationData();
@@ -82,9 +82,9 @@ function App() {
           setCurrentUser({
             id: user.id,
             name: user.name,
-            points: user.points || 0,
-            level: user.level || 1,
-            organizationId: user.organizationId || "1",
+            points: 0, // TODO: Ajouter au backend
+            level: 1, // TODO: Ajouter au backend
+            organizationId: "", // TODO: Ajouter au backend
           });
           // Try to fetch gamification data
           fetchGamificationData();

@@ -34,10 +34,10 @@ const Profile = ({
   gamificationLevel,
 }: ProfileProps) => {
   const [userInfo, setUserInfo] = useState({
-    name: "Utilisateur",
-    email: "user@example.com",
-    organization: "EcoComfort",
-    joinDate: "2024-01-15",
+    name: "",
+    email: "",
+    organization: "",
+    joinDate: "",
   });
   const [activityData, setActivityData] = useState<
     Array<{
@@ -55,20 +55,20 @@ const Profile = ({
   const loadUserData = async () => {
     try {
       setLoading(true);
-      // Note: getUserProfile n'existe pas encore dans le backend
-      // Utilisons les données disponibles depuis les props
+      // TODO: Implémenter l'API getUserProfile dans le backend
+      // Pour l'instant, utiliser les données des props si disponibles
       setUserInfo({
-        name: "Utilisateur", // Sera remplacé par les vraies données quand l'API sera disponible
-        email: "user@example.com",
-        organization: "EcoComfort",
-        joinDate: "2024-01-15",
+        name: "", // Sera rempli par l'API backend
+        email: "", // Sera rempli par l'API backend
+        organization: "", // Sera rempli par l'API backend
+        joinDate: "", // Sera rempli par l'API backend
       });
 
-      // Pas de données d'activité factices - attendre l'implémentation backend
+      // Pas de données d'activité - attendre l'implémentation backend
       setActivityData([]);
     } catch (err: any) {
       console.error("Erreur lors du chargement du profil:", err);
-      // En cas d'erreur, garder les valeurs par défaut
+      // En cas d'erreur, garder les valeurs vides
       setActivityData([]);
     } finally {
       setLoading(false);
