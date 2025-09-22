@@ -201,7 +201,7 @@ private async makeRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 
 Service pour la communication temps réel avec Socket.IO.
 
-#### Configuration
+#### Configuration WebSocket
 ```typescript
 class WebSocketService {
   private socket: Socket | null = null;
@@ -224,7 +224,7 @@ class WebSocketService {
 'disconnected'          // Connexion perdue
 ```
 
-#### Fonctionnalités
+#### Fonctionnalités WebSocket
 - **Reconnexion automatique** avec backoff exponentiel
 - **Initialisation utilisateur différée** si connexion en cours
 - **Gestion des erreurs** robuste
@@ -236,7 +236,7 @@ class WebSocketService {
 
 Page principale avec vue d'ensemble des données IoT.
 
-#### Fonctionnalités
+#### Fonctionnalités Dashboard
 - **Cartes de résumé** - Température, portes ouvertes, perte énergétique, capteurs actifs
 - **Graphiques temps réel** - Analyse énergétique avec Recharts
 - **Capteurs temps réel** - Affichage des données des capteurs
@@ -259,7 +259,7 @@ const unsubscribeSensorData = webSocketService.on("sensor-data-updated", (event)
 
 Interface administrateur pour la gestion du système.
 
-#### Fonctionnalités
+#### Fonctionnalités Admin
 - **Vue d'ensemble système** - Statistiques globales
 - **Gestion des capteurs** - Liste et statut des capteurs
 - **Alertes critiques** - Gestion des alertes non acquittées
@@ -269,7 +269,7 @@ Interface administrateur pour la gestion du système.
 
 Profil utilisateur avec données de gamification.
 
-#### Fonctionnalités
+#### Fonctionnalités Profile
 - **Informations utilisateur** - Nom, email, organisation
 - **Statistiques gamification** - Niveau, points, progression
 - **Graphiques d'activité** - Historique des points et économies
@@ -289,7 +289,7 @@ Paramètres utilisateur et préférences.
 
 Historique des données et événements.
 
-#### Fonctionnalités
+#### Fonctionnalités History
 - **Filtres temporels** - Période sélectionnable
 - **Graphiques historiques** - Évolution des métriques
 - **Export de données** - Téléchargement des rapports
@@ -425,7 +425,7 @@ console.warn("Failed to fetch sensor data:", err);
 console.error("API request failed for", endpoint, error);
 ```
 
-### Outils de développement
+### Outils de debugging
 - **React DevTools** - Inspection des composants
 - **Redux DevTools** - Debugging de l'état (si applicable)
 - **Network tab** - Monitoring des requêtes
