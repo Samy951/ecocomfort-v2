@@ -77,6 +77,37 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Check if user is already authenticated on page load
+    const checkAuthOnLoad = () => {
+      const token = localStorage.getItem('auth_token');
+      const userData = localStorage.getItem('user_data');
+      
+      if (token && userData) {
+        try {
+          const user = JSON.parse(userData);
+          apiService.setAuthToken(token);
+          setCurrentUser({
+            id: user.id,
+            name: user.name,
+            points: user.points || 0,
+            level: user.level || 1,
+            organizationId: user.organizationId || "1",
+          });
+          // Try to fetch gamification data
+          fetchGamificationData();
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          // Clear invalid data
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+        }
+      }
+    };
+
+    checkAuthOnLoad();
+  }, [fetchGamificationData]);
+
+  useEffect(() => {
     // Initialize WebSocket connection
     const unsubscribeConnected = webSocketService.on("connected", () => {
       setIsConnected(true);

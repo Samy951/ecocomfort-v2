@@ -1,18 +1,26 @@
-// Script agressif pour désactiver complètement le service worker
-console.log('🚫 Désactivation forcée du Service Worker...');
+// Script ULTRA agressif pour supprimer le service worker
+console.log('🚫 SUPPRESSION FORCÉE DU SERVICE WORKER...');
 
-// 1. Désactiver tous les service workers
+// 1. Désactiver tous les service workers IMMÉDIATEMENT
 if ('serviceWorker' in navigator) {
+  // Désactiver le service worker actuel
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({type: 'SKIP_WAITING'});
+  }
+  
+  // Désactiver tous les service workers
   navigator.serviceWorker.getRegistrations().then(function(registrations) {
     console.log('📋 Service Workers trouvés:', registrations.length);
     for(let registration of registrations) {
       registration.unregister().then(function(boolean) {
         console.log('✅ Service Worker désactivé:', registration.scope, boolean);
+      }).catch(function(error) {
+        console.error('❌ Erreur lors de la désactivation:', error);
       });
     }
   });
   
-  // 2. Nettoyer tous les caches
+  // 2. Nettoyer tous les caches IMMÉDIATEMENT
   if ('caches' in window) {
     caches.keys().then(function(cacheNames) {
       console.log('🗑️ Caches trouvés:', cacheNames.length);
@@ -24,13 +32,17 @@ if ('serviceWorker' in navigator) {
       );
     }).then(function() {
       console.log('✅ Tous les caches supprimés');
+    }).catch(function(error) {
+      console.error('❌ Erreur lors de la suppression des caches:', error);
     });
   }
   
   // 3. Forcer la suppression du service worker actuel
   navigator.serviceWorker.addEventListener('controllerchange', function() {
     console.log('🔄 Contrôleur changé, rechargement...');
-    window.location.reload();
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   });
 }
 
@@ -41,4 +53,20 @@ if (manifestLink) {
   console.log('✅ Manifest supprimé du DOM');
 }
 
-console.log('🎉 Service Worker et cache nettoyés !');
+// 5. Supprimer les références au service worker dans le DOM
+const swScripts = document.querySelectorAll('script[src*="sw.js"], script[src*="workbox"]');
+swScripts.forEach(script => {
+  script.remove();
+  console.log('✅ Script SW supprimé du DOM');
+});
+
+// 6. Forcer le nettoyage du localStorage
+try {
+  localStorage.removeItem('sw-cache');
+  localStorage.removeItem('workbox-cache');
+  console.log('✅ Cache localStorage nettoyé');
+} catch (error) {
+  console.error('❌ Erreur lors du nettoyage localStorage:', error);
+}
+
+console.log('🎉 Service Worker et cache NETTOYÉS !');
