@@ -80,27 +80,20 @@ interface DashboardOverview {
   alerts: AlertStats;
 }
 
-interface SensorInfo {
-  sensor_id: string;
-  name: string;
-  position: string;
-  room: {
-    id: string;
-    name: string;
-    building_name: string;
-  };
-  battery_level: number;
-  is_online: boolean;
-  door_state?: "closed" | "opened" | "probably_opened" | "moving";
-  door_state_certainty?: "CERTAIN" | "PROBABLE" | "UNCERTAIN";
-  needs_confirmation?: boolean;
-  has_usable_data: boolean;
-  last_seen: string | null;
-  data: SensorData | null;
+interface SensorStatus {
+  sensorId: string;
+  type: 'temperature' | 'humidity' | 'pressure';
+  value: number | null;
+  lastUpdate: Date | null;
+  isOnline: boolean;
 }
 
-interface SensorDataResponse {
-  sensors: SensorInfo[];
+interface CurrentSensorsResponse {
+  doorOpen: boolean;
+  averageTemperature: number | null;
+  averageHumidity: number | null;
+  sensors: SensorStatus[];
+  timestamp: Date;
 }
 
 interface Alert {
@@ -223,24 +216,24 @@ class ApiService {
   // Dashboard Overview
   async getDashboardOverview(): Promise<DashboardOverview> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<DashboardOverview>(`${prefix}/dashboard/overview`);
+    return this.makeRequest<DashboardOverview>(`${prefix}/energy/daily`);
   }
 
   // Sensor Data
   async getSensorData(options?: {
     bypassCache?: boolean;
     forceUnique?: number;
-  }): Promise<SensorDataResponse> {
+  }): Promise<CurrentSensorsResponse> {
     const prefix = this.getEndpointPrefix();
-    const url = `${prefix}/dashboard/sensor-data`;
+    const url = `${prefix}/sensors`;
 
     if (options?.bypassCache || options?.forceUnique) {
       // Add timestamp to bypass cache, use forceUnique if provided
       const timestamp = options.forceUnique || Date.now();
-      return this.makeRequest<SensorDataResponse>(`${url}?t=${timestamp}`);
+      return this.makeRequest<CurrentSensorsResponse>(`${url}?t=${timestamp}`);
     }
 
-    return this.makeRequest<SensorDataResponse>(url);
+    return this.makeRequest<CurrentSensorsResponse>(url);
   }
 
   // Alerts
@@ -271,7 +264,7 @@ class ApiService {
   async getEnergyAnalytics(days: number = 7): Promise<EnergyAnalytics> {
     const prefix = this.getEndpointPrefix();
     return this.makeRequest<EnergyAnalytics>(
-      `${prefix}/dashboard/energy-analytics?days=${days}`
+      `${prefix}/energy/current`
     );
   }
 
@@ -372,7 +365,13 @@ class ApiService {
     achievements: Record<string, unknown>;
   }> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest(`${prefix}/dashboard/gamification`);
+    // Pour l'instant, retournons des données par défaut car l'endpoint nécessite un userId
+    return {
+      level: 1,
+      points: 0,
+      badges: [],
+      achievements: {}
+    };
   }
 
   // Set authentication token
@@ -451,8 +450,8 @@ class ApiService {
 
   async getUserProfile(): Promise<{ id: string; name: string; email: string }> {
     const response = await this.makeRequest<{
-      id: string; 
-      name: string; 
+      id: string;
+      name: string;
       email: string;
     }>("/auth/user");
     return response;

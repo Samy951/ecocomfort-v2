@@ -39,7 +39,19 @@ const Dashboard = ({
   gamification,
   currentUser,
 }: DashboardProps) => {
-  const [currentSensors, setCurrentSensors] = useState<any>(null);
+  const [currentSensors, setCurrentSensors] = useState<{
+    doorOpen: boolean;
+    averageTemperature: number | null;
+    averageHumidity: number | null;
+    sensors: Array<{
+      sensorId: string;
+      type: 'temperature' | 'humidity' | 'pressure';
+      value: number | null;
+      lastUpdate: Date | null;
+      isOnline: boolean;
+    }>;
+    timestamp: Date;
+  } | null>(null);
   const [currentEnergy, setCurrentEnergy] = useState<any>(null);
   const [dailyReport, setDailyReport] = useState<any>(null);
   const [gamificationStats, setGamificationStats] = useState<any>(null);
@@ -168,29 +180,13 @@ const Dashboard = ({
   }
 
   const sensors = currentSensors?.sensors || [];
-  const sensorsWithTemp = sensors.filter(
-    (s: any) =>
-      s.data?.temperature !== null && s.data?.temperature !== undefined
-  );
-  const averageTemperature =
-    sensorsWithTemp.length > 0
-      ? sensorsWithTemp.reduce(
-          (sum: number, s: any) => sum + (Number(s.data?.temperature) || 0),
-          0
-        ) / sensorsWithTemp.length
-      : 0;
+  const temperatureSensors = sensors.filter(s => s.type === 'temperature' && s.value !== null);
+  const averageTemperature = currentSensors?.averageTemperature || 0;
+  const doorsOpenCount = currentSensors?.doorOpen ? 1 : 0;
 
-  const sensorsWithOpenDoors = sensors.filter(
-    (s: any) => s.data?.door_state === true
-  );
-  const doorsOpenCount = sensorsWithOpenDoors.length;
+  const totalEnergyLoss = currentEnergy?.currentLossWatts || 0;
 
-  const totalEnergyLoss = sensors.reduce((sum: number, s: any) => {
-    const energyLoss = Number(s.data?.energy_loss_watts) || 0;
-    return sum + energyLoss;
-  }, 0);
-
-  const activeSensors = sensors.filter((s: any) => s.is_online).length;
+  const activeSensors = sensors.filter(s => s.isOnline).length;
   const totalSensors = sensors.length;
 
   return (
