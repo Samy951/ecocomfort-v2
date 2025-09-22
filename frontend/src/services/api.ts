@@ -82,7 +82,7 @@ interface DashboardOverview {
 
 interface SensorStatus {
   sensorId: string;
-  type: 'temperature' | 'humidity' | 'pressure';
+  type: "temperature" | "humidity" | "pressure";
   value: number | null;
   lastUpdate: Date | null;
   isOnline: boolean;
@@ -216,7 +216,9 @@ class ApiService {
   // Dashboard Overview
   async getDashboardOverview(): Promise<DashboardOverview> {
     const prefix = this.getEndpointPrefix();
-    return this.makeRequest<DashboardOverview>(`${prefix}/energy/daily`);
+    return this.makeRequest<DashboardOverview>(
+      `${prefix}/api/energy/daily`
+    );
   }
 
   // Sensor Data
@@ -225,7 +227,7 @@ class ApiService {
     forceUnique?: number;
   }): Promise<CurrentSensorsResponse> {
     const prefix = this.getEndpointPrefix();
-    const url = `${prefix}/sensors`;
+    const url = `${prefix}/api/sensors`;
 
     if (options?.bypassCache || options?.forceUnique) {
       // Add timestamp to bypass cache, use forceUnique if provided
@@ -264,7 +266,7 @@ class ApiService {
   async getEnergyAnalytics(days: number = 7): Promise<EnergyAnalytics> {
     const prefix = this.getEndpointPrefix();
     return this.makeRequest<EnergyAnalytics>(
-      `${prefix}/energy/current`
+      `${prefix}/api/energy/current`
     );
   }
 
@@ -370,7 +372,7 @@ class ApiService {
       level: 1,
       points: 0,
       badges: [],
-      achievements: {}
+      achievements: {},
     };
   }
 
