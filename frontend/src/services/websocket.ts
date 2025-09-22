@@ -7,6 +7,7 @@ class WebSocketService {
   private subscribers: Map<string, Set<Function>> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private pendingUserInit: { userId: string; organizationId: string } | null = null;
 
   constructor() {
     // WebSocket activé - backend Socket.IO disponible
@@ -31,6 +32,13 @@ class WebSocketService {
         this.isConnected = true;
         this.reconnectAttempts = 0;
         this.notifySubscribers("connected", { socketId: this.socket?.id });
+        
+        // Envoyer l'initialisation utilisateur différée si elle existe
+        if (this.pendingUserInit) {
+          console.log("👤 Envoi de l'initialisation utilisateur différée:", this.pendingUserInit);
+          this.emit("user_init", this.pendingUserInit);
+          this.pendingUserInit = null;
+        }
       });
 
       this.socket.on('disconnect', (reason) => {
@@ -138,8 +146,15 @@ class WebSocketService {
     console.log(
       `👤 Initialisation utilisateur: ${userId}, organisation: ${organizationId}`
     );
-    // Envoyer les informations utilisateur au serveur
-    this.emit("user_init", { userId, organizationId });
+    
+    // Attendre que la connexion soit établie avant d'émettre
+    if (this.isConnected && this.socket) {
+      this.emit("user_init", { userId, organizationId });
+    } else {
+      console.log("⏳ Connexion Socket.IO en cours, initialisation différée...");
+      // Stocker les données utilisateur pour les envoyer une fois connecté
+      this.pendingUserInit = { userId, organizationId };
+    }
   }
 
   public disconnect() {
