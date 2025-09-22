@@ -396,10 +396,8 @@ class ApiService {
     user: { id: string; name: string; email: string };
   }> {
     const response = await this.makeRequest<{
-      data: {
-        access_token: string;
-        user: { id: string; name: string; email: string };
-      };
+      access_token: string;
+      user: { id: string; name: string; email: string };
     }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({
@@ -409,8 +407,8 @@ class ApiService {
     });
 
     return {
-      token: response.data.access_token,
-      user: response.data.user,
+      token: response.access_token,
+      user: response.user,
     };
   }
 
@@ -425,10 +423,8 @@ class ApiService {
     user: { id: string; name: string; email: string };
   }> {
     const response = await this.makeRequest<{
-      data: {
-        access_token: string;
-        user: { id: string; name: string; email: string };
-      };
+      access_token: string;
+      user: { id: string; name: string; email: string };
     }>("/auth/register", {
       method: "POST",
       body: JSON.stringify({
@@ -441,8 +437,8 @@ class ApiService {
     });
 
     return {
-      token: response.data.access_token,
-      user: response.data.user,
+      token: response.access_token,
+      user: response.user,
     };
   }
 
@@ -455,9 +451,11 @@ class ApiService {
 
   async getUserProfile(): Promise<{ id: string; name: string; email: string }> {
     const response = await this.makeRequest<{
-      data: { id: string; name: string; email: string };
+      id: string; 
+      name: string; 
+      email: string;
     }>("/auth/user");
-    return response.data;
+    return response;
   }
 
   // Health check
