@@ -121,25 +121,37 @@ export class RuuviParser implements OnModuleInit {
   }
 
   public getAverageIndoorTemperature(): number | null {
-    const temperatures: number[] = [];
+    const recentTemperatures: number[] = [];
+    const allTemperatures: number[] = [];
     const now = Date.now();
 
     for (const [sensorId, state] of this.sensorStates) {
-      if (state.temperature !== undefined &&
-          (now - state.lastUpdate.getTime()) < this.DATA_TIMEOUT_MS) {
-        temperatures.push(state.temperature);
+      if (state.temperature !== undefined) {
+        allTemperatures.push(state.temperature);
+
+        if ((now - state.lastUpdate.getTime()) < this.DATA_TIMEOUT_MS) {
+          recentTemperatures.push(state.temperature);
+        }
       }
     }
 
+    // Use recent data if available, otherwise fall back to last known values
+    const temperatures = recentTemperatures.length > 0 ? recentTemperatures : allTemperatures;
+
     if (temperatures.length === 0) {
-      this.logger.warn('No recent temperature data available for average calculation');
+      this.logger.warn('No temperature data available for average calculation');
       return null;
     }
 
     const average = temperatures.reduce((sum, temp) => sum + temp, 0) / temperatures.length;
     const roundedAverage = Math.round(average * 100) / 100;
 
-    this.logger.log(`Average indoor temperature: ${roundedAverage}°C (${temperatures.length} sensors active)`);
+    if (recentTemperatures.length === 0 && allTemperatures.length > 0) {
+      this.logger.warn('No recent temperature data available for average calculation, using last known values');
+    } else {
+      this.logger.log(`Average indoor temperature: ${roundedAverage}°C (${temperatures.length} sensors active)`);
+    }
+
     return roundedAverage;
   }
 
@@ -165,25 +177,37 @@ export class RuuviParser implements OnModuleInit {
   }
 
   public getAverageIndoorHumidity(): number | null {
-    const humidities: number[] = [];
+    const recentHumidities: number[] = [];
+    const allHumidities: number[] = [];
     const now = Date.now();
 
     for (const [sensorId, state] of this.sensorStates) {
-      if (state.humidity !== undefined &&
-          (now - state.lastUpdate.getTime()) < this.DATA_TIMEOUT_MS) {
-        humidities.push(state.humidity);
+      if (state.humidity !== undefined) {
+        allHumidities.push(state.humidity);
+
+        if ((now - state.lastUpdate.getTime()) < this.DATA_TIMEOUT_MS) {
+          recentHumidities.push(state.humidity);
+        }
       }
     }
 
+    // Use recent data if available, otherwise fall back to last known values
+    const humidities = recentHumidities.length > 0 ? recentHumidities : allHumidities;
+
     if (humidities.length === 0) {
-      this.logger.warn('No recent humidity data available for average calculation');
+      this.logger.warn('No humidity data available for average calculation');
       return null;
     }
 
     const average = humidities.reduce((sum, humidity) => sum + humidity, 0) / humidities.length;
     const roundedAverage = Math.round(average * 100) / 100;
 
-    this.logger.log(`Average indoor humidity: ${roundedAverage}% (${humidities.length} sensors active)`);
+    if (recentHumidities.length === 0 && allHumidities.length > 0) {
+      this.logger.warn('No recent humidity data available for average calculation, using last known values');
+    } else {
+      this.logger.log(`Average indoor humidity: ${roundedAverage}% (${humidities.length} sensors active)`);
+    }
+
     return roundedAverage;
   }
 

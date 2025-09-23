@@ -285,6 +285,14 @@ class ApiService {
     );
   }
 
+  // Chart Data
+  async getChartData(): Promise<any[]> {
+    const prefix = this.getEndpointPrefix();
+    return this.makeRequest<any[]>(
+      `${prefix}/dashboard/energy/chart-data`
+    );
+  }
+
 
   // Sensor History
   async getSensorHistory(
