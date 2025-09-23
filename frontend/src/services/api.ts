@@ -241,43 +241,12 @@ class ApiService {
         : url
     );
 
-    // Normalize backend snake_case to frontend SensorStatus[]
-    const normalizedSensors: SensorStatus[] = [];
-    const backendSensors: any[] = raw?.sensors || [];
-    for (const s of backendSensors) {
-      const isOnline: boolean = !!s?.is_online;
-      const lastUpdateIso: string | undefined = s?.data?.timestamp;
-      const lastUpdate: Date | null = lastUpdateIso
-        ? new Date(lastUpdateIso)
-        : null;
-
-      // temperature entry
-      if (typeof s?.data?.temperature === "number") {
-        normalizedSensors.push({
-          sensorId: s.sensor_id || s.sensorId || "unknown",
-          type: "temperature",
-          value: s.data.temperature,
-          lastUpdate,
-          isOnline,
-        });
-      }
-      // humidity entry
-      if (typeof s?.data?.humidity === "number") {
-        normalizedSensors.push({
-          sensorId: s.sensor_id || s.sensorId || "unknown",
-          type: "humidity",
-          value: s.data.humidity,
-          lastUpdate,
-          isOnline,
-        });
-      }
-    }
-
+    // Backend now returns data in frontend format directly
     const response: CurrentSensorsResponse = {
       doorOpen: !!raw?.doorOpen,
       averageTemperature: raw?.averageTemperature ?? null,
       averageHumidity: raw?.averageHumidity ?? null,
-      sensors: normalizedSensors,
+      sensors: raw?.sensors || [],
       timestamp: raw?.timestamp ? new Date(raw.timestamp) : new Date(),
     };
 
@@ -313,6 +282,14 @@ class ApiService {
     const prefix = this.getEndpointPrefix();
     return this.makeRequest<EnergyAnalytics>(
       `${prefix}/dashboard/energy/current`
+    );
+  }
+
+  // Chart Data
+  async getChartData(): Promise<any[]> {
+    const prefix = this.getEndpointPrefix();
+    return this.makeRequest<any[]>(
+      `${prefix}/dashboard/energy/chart-data`
     );
   }
 
@@ -390,9 +367,19 @@ class ApiService {
     achievements: Record<string, unknown>;
   }> {
     const prefix = this.getEndpointPrefix();
-    // TODO: Implémenter l'endpoint de gamification dans le backend
-    // Pour l'instant, retourner une erreur pour éviter les données factices
-    throw new Error("Gamification endpoint not implemented yet");
+    try {
+      return await this.makeRequest(`${prefix}/gamification/stats`);
+    } catch (error) {
+      // Show toast notification for missing endpoint
+      console.warn("Système de gamification bientôt disponible");
+      // Return default values to avoid breaking the UI
+      return {
+        level: 1,
+        points: 0,
+        badges: [],
+        achievements: {},
+      };
+    }
   }
 
   // Set authentication token
@@ -429,7 +416,7 @@ class ApiService {
   }> {
     const response = await this.makeRequest<{
       access_token: string;
-      user: { id: string; name: string; email: string };
+      user: { id: number; name: string; email: string; level?: string; points?: number };
     }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({
@@ -440,7 +427,11 @@ class ApiService {
 
     return {
       token: response.access_token,
-      user: response.user,
+      user: {
+        id: String(response.user.id), // Convert number to string for frontend compatibility
+        name: response.user.name,
+        email: response.user.email,
+      },
     };
   }
 

@@ -140,4 +140,10 @@ export class DoorService implements OnModuleInit {
     // Trigger gamification check (assume userId = 1 for mono-user app)
     await this.gamificationService.handleDoorClosed(1, durationSeconds);
   }
+
+  // Method for testing door state without MQTT
+  async simulateDoorStateChange(isOpen: boolean): Promise<void> {
+    this.logger.log(`[TEST] Simulating door state change to: ${isOpen ? 'OPEN' : 'CLOSED'}`);
+    await this.processDoorStateChange(isOpen);
+  }
 }

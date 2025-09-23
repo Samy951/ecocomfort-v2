@@ -10,6 +10,7 @@ import {
   Trophy,
   Loader2,
   RefreshCw,
+  Euro,
 } from "lucide-react";
 import {
   LineChart,
@@ -107,6 +108,15 @@ const Dashboard = ({
           });
         if (dailyData) setDailyReport(dailyData);
 
+        // Load chart data
+        const chartData = await apiService
+          .getChartData()
+          .catch((err) => {
+            console.warn("Failed to fetch chart data:", err);
+            return [];
+          });
+        if (chartData) setChartData(chartData);
+
         // Note: gamificationData sera géré par le composant parent (App.tsx)
       } catch (err: unknown) {
         const error = err as AppError;
@@ -197,11 +207,7 @@ const Dashboard = ({
   // Pas de données factices - utiliser les vraies données du backend
   const [chartData, setChartData] = useState([]);
 
-  // Les graphiques seront alimentés par les vraies données quand disponibles
-  useEffect(() => {
-    // TODO: Remplacer par les vraies données du backend
-    setChartData([]);
-  }, [currentSensors, currentEnergy]);
+  // Chart data is now loaded in loadAllData function
 
   if (loading) {
     return (
@@ -240,32 +246,16 @@ const Dashboard = ({
 
   const totalEnergyLoss = Number(currentEnergy?.currentLossWatts) || 0;
 
-  // Group sensors by sensorId to combine temperature and humidity data
-  const groupedSensors = sensors.reduce((acc, sensor) => {
-    const existingSensor = acc.find(s => s.sensorId === sensor.sensorId);
-    if (existingSensor) {
-      if (sensor.type === "temperature") {
-        existingSensor.temperature = sensor.value;
-      } else if (sensor.type === "humidity") {
-        existingSensor.humidity = sensor.value;
-      }
-    } else {
-      acc.push({
-        sensorId: sensor.sensorId,
-        isOnline: sensor.isOnline,
-        lastUpdate: sensor.lastUpdate,
-        temperature: sensor.type === "temperature" ? sensor.value : null,
-        humidity: sensor.type === "humidity" ? sensor.value : null,
-      });
-    }
-    return acc;
-  }, [] as Array<{
-    sensorId: string;
-    isOnline: boolean;
-    lastUpdate: Date | null;
-    temperature: number | null;
-    humidity: number | null;
-  }>);
+  // Map sensors directly from backend format (already combined)
+  const groupedSensors = sensors
+    .filter(sensor => sensor.type === "combined")
+    .map(sensor => ({
+      sensorId: sensor.sensorId,
+      isOnline: sensor.isOnline,
+      lastUpdate: sensor.lastUpdate,
+      temperature: (sensor as any).temperature,
+      humidity: (sensor as any).humidity,
+    }));
 
   const activeSensors = groupedSensors.filter((s) => s.isOnline).length;
   const totalSensors = groupedSensors.length;
@@ -343,6 +333,14 @@ const Dashboard = ({
             <Typography variant="h4" color="main-white">
               {totalEnergyLoss.toFixed(2)} W
             </Typography>
+            <Typography variant="paragraph-small" color="medium-grey">
+              Taux: {(Number(currentEnergy?.currentCostPerHour) || 0).toFixed(5)}€/h
+            </Typography>
+            {currentEnergy?.doorOpenDuration > 0 && (
+              <Typography variant="paragraph-small" color="warning">
+                Session: {(Number(currentEnergy?.cumulativeCostEuros) || 0).toFixed(5)}€
+              </Typography>
+            )}
           </div>
           <Zap className="w-8 h-8 text-warning" />
         </Card>
@@ -361,6 +359,25 @@ const Dashboard = ({
             </Typography>
           </div>
           <Activity className="w-8 h-8 text-info" />
+        </Card>
+
+        <Card
+          variant="glass"
+          padding="md"
+          className="flex items-center justify-between"
+        >
+          <div>
+            <Typography variant="paragraph-small" color="medium-grey">
+              Coût Session
+            </Typography>
+            <Typography variant="h4" color="main-white">
+              {(Number(currentEnergy?.cumulativeCostEuros) || 0).toFixed(5)}€
+            </Typography>
+            <Typography variant="paragraph-small" color="medium-grey">
+              {currentEnergy?.doorOpenDuration > 0 ? 'En cours' : 'Dernière session'}
+            </Typography>
+          </div>
+          <Euro className="w-8 h-8 text-warning" />
         </Card>
       </div>
 

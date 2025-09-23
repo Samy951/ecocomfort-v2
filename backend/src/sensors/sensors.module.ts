@@ -7,6 +7,7 @@ import { EnergyModule } from '../energy/energy.module';
 import { GamificationModule } from '../gamification/gamification.module';
 import { DoorService } from './door.service';
 import { RuuviParser } from './ruuvi.parser';
+import { SensorsController } from './sensors.controller';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RuuviParser } from './ruuvi.parser';
     forwardRef(() => EnergyModule),
     forwardRef(() => GamificationModule),
   ],
+  controllers: [SensorsController],
   providers: [DoorService, RuuviParser],
   exports: [DoorService, RuuviParser],
 })

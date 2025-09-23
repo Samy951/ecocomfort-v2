@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Query,
+  Param,
   UseGuards,
   Inject,
   DefaultValuePipe,
@@ -23,6 +24,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DoorService } from '../sensors/door.service';
 import { RuuviParser } from '../sensors/ruuvi.parser';
 import { EnergyService } from '../energy/energy.service';
+import { ConfigurationService } from '../shared/config/configuration.service';
 import { EnergyMetric } from '../shared/entities/energy-metric.entity';
 import { DoorState } from '../shared/entities/door-state.entity';
 import {
@@ -45,6 +47,7 @@ export class DashboardController {
     private readonly doorService: DoorService,
     private readonly ruuviParser: RuuviParser,
     private readonly energyService: EnergyService,
+    private readonly configService: ConfigurationService,
     @InjectRepository(EnergyMetric)
     private readonly energyMetricRepository: Repository<EnergyMetric>,
     @InjectRepository(DoorState)
@@ -67,7 +70,7 @@ export class DashboardController {
     const averageTemperature = this.ruuviParser.getAverageIndoorTemperature();
     const averageHumidity = this.ruuviParser.getAverageIndoorHumidity();
 
-    // Build sensor details grouped by physical sensor
+    // Build sensor details in frontend expected format
     const sensorIds = ['944372022', '422801533', '1947698524'];
     const sensors: any[] = [];
 
@@ -77,25 +80,14 @@ export class DashboardController {
         ? Date.now() - sensorData.lastUpdate.getTime() < 24 * 60 * 60 * 1000 // 24 hours
         : false;
 
-      const hasUsableData = sensorData && (sensorData.temperature !== null || sensorData.humidity !== null);
-
-      // Create a grouped sensor object matching frontend expectations
+      // Create a single sensor entry with both temperature and humidity
       sensors.push({
-        sensor_id: sensorId,
-        name: `Capteur ${sensorId.slice(-3)}`, // Use last 3 digits for display
-        room: {
-          name: 'Salle inconnue',
-          building_name: 'Bâtiment principal',
-        },
-        data: {
-          timestamp: sensorData?.lastUpdate?.toISOString() || new Date().toISOString(),
-          temperature: sensorData?.temperature || null,
-          humidity: sensorData?.humidity || null,
-          door_state: false,
-          energy_loss_watts: 0,
-        },
-        is_online: isOnline,
-        has_usable_data: hasUsableData,
+        sensorId: sensorId, // Keep original sensorId without suffix
+        type: 'combined', // Indicate this contains both temp and humidity
+        temperature: sensorData?.temperature !== null && sensorData?.temperature !== undefined ? sensorData.temperature : null,
+        humidity: sensorData?.humidity !== null && sensorData?.humidity !== undefined ? sensorData.humidity : null,
+        lastUpdate: sensorData?.lastUpdate || null,
+        isOnline: isOnline,
       });
     }
 
@@ -122,32 +114,60 @@ export class DashboardController {
       order: { timestamp: 'DESC' },
     });
 
-    if (!latestMetric) {
-      // Return default values if no metrics available
-      return {
-        currentLossWatts: 0,
-        currentCostPerHour: 0,
-        doorOpenDuration: 0,
-        indoorTemp: 0,
-        outdoorTemp: 0,
-        timestamp: new Date(),
-      };
-    }
-
     // Calculate current door open duration if door is open
     let doorOpenDuration = 0;
+    let currentLossWatts = 0;
+    let currentCostPerHour = 0;
+    let cumulativeCostEuros = 0;
+    let indoorTemp = 0;
+    let outdoorTemp = 0;
+
     if (this.doorService.currentDoorState?.isOpen && this.doorService.currentDoorState?.openedAt) {
       const openingSince = this.doorService.currentDoorState.openedAt;
       doorOpenDuration = Math.floor((Date.now() - openingSince.getTime()) / 1000);
+
+      // Calculate real-time energy loss while door is open
+      const avgIndoorTemp = this.ruuviParser.getAverageIndoorTemperature();
+      if (avgIndoorTemp !== null) {
+        // Use latest outdoor temp from metric or try to get fresh data
+        const latestOutdoorTemp = latestMetric?.outdoorTemp || 15; // fallback
+        const deltaT = avgIndoorTemp - latestOutdoorTemp;
+
+        if (deltaT > 0) {
+          // Calculate instantaneous power loss (Watts per hour)
+          const config = this.configService.energy;
+          const instantPowerLossWatts = Math.round(deltaT * config.doorSurfaceM2 * config.thermalCoefficientU * 100) / 100;
+
+          // For display, calculate cumulative loss based on duration
+          const durationHours = doorOpenDuration / 3600;
+          currentLossWatts = Math.round(instantPowerLossWatts * durationHours * 100) / 100;
+
+          // Cost per hour: convert watts to kW and multiply by tariff
+          currentCostPerHour = Math.round((instantPowerLossWatts / 1000) * config.energyCostPerKwh * 100000) / 100000;
+
+          // Calculate cumulative cost for this session: total energy consumed * tariff
+          cumulativeCostEuros = Math.round((currentLossWatts / 1000) * config.energyCostPerKwh * 100000) / 100000;
+        }
+
+        indoorTemp = avgIndoorTemp;
+        outdoorTemp = latestOutdoorTemp;
+      }
+    } else if (latestMetric) {
+      // Door is closed, use latest metric values
+      currentLossWatts = latestMetric.energyLossWatts;
+      currentCostPerHour = latestMetric.costEuros;
+      indoorTemp = latestMetric.indoorTemp;
+      outdoorTemp = latestMetric.outdoorTemp;
     }
 
     return {
-      currentLossWatts: latestMetric.energyLossWatts,
-      currentCostPerHour: latestMetric.costEuros,
+      currentLossWatts,
+      currentCostPerHour,
+      cumulativeCostEuros,
       doorOpenDuration,
-      indoorTemp: latestMetric.indoorTemp,
-      outdoorTemp: latestMetric.outdoorTemp,
-      timestamp: latestMetric.timestamp,
+      indoorTemp,
+      outdoorTemp,
+      timestamp: new Date(),
     };
   }
 
@@ -270,6 +290,121 @@ export class DashboardController {
     };
   }
 
+  @Get('energy/chart-data')
+  @ApiOperation({ summary: 'Get energy data for chart (last 24h)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Chart data for last 24 hours',
+  })
+  async getChartData(): Promise<any> {
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Get energy metrics from last 24h grouped by hour
+    const energyData = await this.energyMetricRepository
+      .createQueryBuilder('em')
+      .select([
+        'EXTRACT(HOUR FROM em.timestamp) as hour',
+        'AVG(em.indoorTemp) as avgIndoorTemp',
+        'AVG(em.outdoorTemp) as avgOutdoorTemp',
+        'SUM(em.energyLossWatts) as totalEnergyLoss',
+        'SUM(em.costEuros) as totalCost',
+        'COUNT(em.id) as count',
+      ])
+      .where('em.timestamp >= :last24Hours', { last24Hours })
+      .groupBy('hour')
+      .orderBy('hour', 'ASC')
+      .getRawMany();
+
+    // Build 24-hour chart data
+    const chartData: any[] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const currentTime = new Date();
+      const targetTime = new Date(currentTime.getTime() - (23 - hour) * 60 * 60 * 1000);
+
+      const hourData = energyData.find(d => parseInt(d.hour) === targetTime.getHours());
+
+      chartData.push({
+        name: `${targetTime.getHours()}h`,
+        hour: targetTime.getHours(),
+        timestamp: targetTime.toISOString(),
+        temperature: hourData ? parseFloat(hourData.avgindoortemp) : null,
+        outdoorTemp: hourData ? parseFloat(hourData.avgoutdoortemp) : null,
+        energyLoss: hourData ? parseFloat(hourData.totalenergyloss) : 0,
+        cost: hourData ? parseFloat(hourData.totalcost) : 0,
+        count: hourData ? parseInt(hourData.count) : 0,
+      });
+    }
+
+    return chartData;
+  }
+
+  @Get('test/door/:action')
+  @ApiOperation({ summary: 'Test door state change (development only)' })
+  async testDoorState(@Param('action') action: string): Promise<any> {
+    if (process.env.NODE_ENV !== 'development') {
+      throw new BadRequestException('Test endpoints only available in development');
+    }
+
+    const isOpen = action === 'open';
+
+    // Simulate MQTT message processing
+    await this.doorService.simulateDoorStateChange(isOpen);
+
+    return {
+      message: `Door state changed to: ${isOpen ? 'OPEN' : 'CLOSED'}`,
+      doorOpen: isOpen,
+      timestamp: new Date()
+    };
+  }
+
+  @Get('alerts')
+  @ApiOperation({ summary: 'Get alerts (mock endpoint)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'severity',
+    required: false,
+    description: 'Filter by severity',
+  })
+  @ApiQuery({
+    name: 'acknowledged',
+    required: false,
+    description: 'Filter by acknowledged status',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Alerts list (currently mock data)',
+  })
+  async getAlerts(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('severity') severity?: string,
+    @Query('acknowledged') acknowledged?: boolean,
+  ): Promise<any> {
+    // Mock endpoint - returns empty data
+    return {
+      alerts: [],
+      pagination: {
+        current_page: page || 1,
+        last_page: 1,
+        per_page: limit || 20,
+        total: 0,
+      },
+      stats: {
+        unacknowledged: 0,
+        critical: 0,
+      },
+    };
+  }
+
   private async generateDailyReport(date: string): Promise<DailyReportDto> {
     const startDate = new Date(`${date}T00:00:00Z`);
     const endDate = new Date(`${date}T23:59:59Z`);
@@ -356,12 +491,53 @@ export class DashboardController {
       totalDoorOpenDuration: doorTotals?.totalDuration ? parseInt(doorTotals.totalDuration) : 0,
     };
 
+    // Calculate weekly totals (last 7 days)
+    const weekStart = new Date(startDate.getTime() - 6 * 24 * 60 * 60 * 1000);
+    const weeklyTotals = await this.calculatePeriodTotals(weekStart, endDate);
+
+    // Calculate monthly totals (last 30 days)
+    const monthStart = new Date(startDate.getTime() - 29 * 24 * 60 * 60 * 1000);
+    const monthlyTotals = await this.calculatePeriodTotals(monthStart, endDate);
+
     return {
       date,
       hourlyMetrics: hourlyData,
       totals,
+      weeklyTotals,
+      monthlyTotals,
       averageIndoorTemp: dayTotals?.avgIndoor ? parseFloat(dayTotals.avgIndoor) : 0,
       averageOutdoorTemp: dayTotals?.avgOutdoor ? parseFloat(dayTotals.avgOutdoor) : 0,
+    };
+  }
+
+  private async calculatePeriodTotals(startDate: Date, endDate: Date): Promise<{ totalCostEuros: number; totalLossWatts: number; totalDoorOpenings: number }> {
+    // Calculate period energy totals
+    const energyTotals = await this.energyMetricRepository
+      .createQueryBuilder('em')
+      .select([
+        'SUM(em.energyLossWatts) as totalLoss',
+        'SUM(em.costEuros) as totalCost',
+      ])
+      .where('em.timestamp BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .getRawOne();
+
+    // Calculate period door totals
+    const doorTotals = await this.doorStateRepository
+      .createQueryBuilder('ds')
+      .select(['COUNT(ds.id) as totalOpenings'])
+      .where('ds.isOpen = true AND ds.timestamp BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .getRawOne();
+
+    return {
+      totalCostEuros: energyTotals?.totalCost ? parseFloat(energyTotals.totalCost) : 0,
+      totalLossWatts: energyTotals?.totalLoss ? parseFloat(energyTotals.totalLoss) : 0,
+      totalDoorOpenings: doorTotals?.totalOpenings ? parseInt(doorTotals.totalOpenings) : 0,
     };
   }
 }

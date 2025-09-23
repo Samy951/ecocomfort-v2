@@ -69,6 +69,9 @@ export class CurrentEnergyDto {
   @ApiProperty({ description: 'Current cost per hour in euros' })
   currentCostPerHour: number;
 
+  @ApiProperty({ description: 'Cumulative cost for current session in euros' })
+  cumulativeCostEuros: number;
+
   @ApiProperty({ description: 'Door open duration in seconds' })
   doorOpenDuration: number;
 
@@ -120,6 +123,17 @@ export class DailyTotals {
   totalDoorOpenDuration: number;
 }
 
+export class PeriodTotals {
+  @ApiProperty({ description: 'Total cost in euros for the period' })
+  totalCostEuros: number;
+
+  @ApiProperty({ description: 'Total energy loss in watts for the period' })
+  totalLossWatts: number;
+
+  @ApiProperty({ description: 'Total door openings for the period' })
+  totalDoorOpenings: number;
+}
+
 export class DailyReportDto {
   @ApiProperty({ description: 'Date in YYYY-MM-DD format' })
   date: string;
@@ -137,6 +151,18 @@ export class DailyReportDto {
     description: 'Daily aggregated totals'
   })
   totals: DailyTotals;
+
+  @ApiProperty({
+    type: PeriodTotals,
+    description: 'Weekly aggregated totals'
+  })
+  weeklyTotals: PeriodTotals;
+
+  @ApiProperty({
+    type: PeriodTotals,
+    description: 'Monthly aggregated totals'
+  })
+  monthlyTotals: PeriodTotals;
 
   @ApiProperty({ description: 'Average indoor temperature for the day' })
   averageIndoorTemp: number;
