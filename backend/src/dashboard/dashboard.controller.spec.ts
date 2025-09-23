@@ -8,6 +8,7 @@ import { DashboardController } from './dashboard.controller';
 import { DoorService } from '../sensors/door.service';
 import { RuuviParser } from '../sensors/ruuvi.parser';
 import { EnergyService } from '../energy/energy.service';
+import { ConfigurationService } from '../shared/config/configuration.service';
 import { EnergyMetric } from '../shared/entities/energy-metric.entity';
 import { DoorState } from '../shared/entities/door-state.entity';
 import { mockService, MockFactory } from '../shared/testing/mockers';
@@ -43,6 +44,7 @@ describe('DashboardController', () => {
           getSensorData: jest.fn(),
         }),
         mockService(EnergyService),
+        mockService(ConfigurationService, {}),
         {
           provide: getRepositoryToken(EnergyMetric),
           useValue: {
@@ -97,21 +99,12 @@ describe('DashboardController', () => {
       expect(result.averageHumidity).toBe(45.2);
       expect(result.sensors).toHaveLength(3); // 3 physical sensors
       expect(result.sensors[0]).toEqual({
-        sensor_id: '944372022',
-        name: 'Capteur 022',
-        room: {
-          name: 'Salle inconnue',
-          building_name: 'Bâtiment principal',
-        },
-        data: {
-          temperature: 22.0,
-          humidity: 45.0,
-          door_state: false,
-          energy_loss_watts: 0,
-          timestamp: expect.any(String),
-        },
-        is_online: true,
-        has_usable_data: true,
+        sensorId: '944372022',
+        type: 'combined',
+        temperature: 22.0,
+        humidity: 45.0,
+        lastUpdate: expect.any(Date),
+        isOnline: true,
       });
     });
 
@@ -127,9 +120,9 @@ describe('DashboardController', () => {
       // Assert
       expect(result.averageTemperature).toBeNull();
       expect(result.averageHumidity).toBeNull();
-      expect(result.sensors[0].is_online).toBe(false);
-      expect(result.sensors[0].data.temperature).toBeNull();
-      expect(result.sensors[0].data.humidity).toBeNull();
+      expect(result.sensors[0].isOnline).toBe(false);
+      expect(result.sensors[0].temperature).toBeNull();
+      expect(result.sensors[0].humidity).toBeNull();
     });
 
     it('should detect door open state', async () => {
@@ -233,6 +226,16 @@ describe('DashboardController', () => {
           totalDoorOpenings: 48,
           totalDoorOpenDuration: 2880,
         },
+        weeklyTotals: {
+          totalCostEuros: 2.856,
+          totalLossWatts: 16800,
+          totalDoorOpenings: 336,
+        },
+        monthlyTotals: {
+          totalCostEuros: 12.24,
+          totalLossWatts: 72000,
+          totalDoorOpenings: 1440,
+        },
         averageIndoorTemp: 22.0,
         averageOutdoorTemp: 5.0,
       };
@@ -296,6 +299,16 @@ describe('DashboardController', () => {
         totalCostEuros: 0.026,
         doorOpenings: 2,
         doorOpenDuration: 120,
+      });
+      expect(result.weeklyTotals).toEqual({
+        totalCostEuros: expect.any(Number),
+        totalLossWatts: expect.any(Number),
+        totalDoorOpenings: expect.any(Number),
+      });
+      expect(result.monthlyTotals).toEqual({
+        totalCostEuros: expect.any(Number),
+        totalLossWatts: expect.any(Number),
+        totalDoorOpenings: expect.any(Number),
       });
       expect(cacheManager.set).toHaveBeenCalledWith(
         'daily-report-2024-01-15',

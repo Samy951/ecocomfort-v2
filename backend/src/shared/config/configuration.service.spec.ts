@@ -114,8 +114,8 @@ describe('ConfigurationService', () => {
       expect(service.openWeather.lat).toBe(48.8566);
       expect(service.openWeather.lon).toBe(2.3522);
       expect(service.energy.doorSurfaceM2).toBe(2.0);
-      expect(service.energy.thermalCoefficientU).toBe(3.5);
-      expect(service.energy.energyCostPerKwh).toBe(0.174);
+      expect(service.energy.thermalCoefficientU).toBe(5.0);
+      expect(service.energy.energyCostPerKwh).toBe(0.23);
     });
   });
 

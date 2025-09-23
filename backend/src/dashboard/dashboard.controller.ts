@@ -493,11 +493,11 @@ export class DashboardController {
 
     // Calculate weekly totals (last 7 days)
     const weekStart = new Date(startDate.getTime() - 6 * 24 * 60 * 60 * 1000);
-    const weeklyTotals = await this.calculatePeriodTotals(weekStart, endOfDay);
+    const weeklyTotals = await this.calculatePeriodTotals(weekStart, endDate);
 
     // Calculate monthly totals (last 30 days)
     const monthStart = new Date(startDate.getTime() - 29 * 24 * 60 * 60 * 1000);
-    const monthlyTotals = await this.calculatePeriodTotals(monthStart, endOfDay);
+    const monthlyTotals = await this.calculatePeriodTotals(monthStart, endDate);
 
     return {
       date,
