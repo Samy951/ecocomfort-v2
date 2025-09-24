@@ -109,12 +109,10 @@ const Dashboard = ({
         if (dailyData) setDailyReport(dailyData);
 
         // Load chart data
-        const chartData = await apiService
-          .getChartData()
-          .catch((err) => {
-            console.warn("Failed to fetch chart data:", err);
-            return [];
-          });
+        const chartData = await apiService.getChartData().catch((err) => {
+          console.warn("Failed to fetch chart data:", err);
+          return [];
+        });
         if (chartData) setChartData(chartData);
 
         // Note: gamificationData sera géré par le composant parent (App.tsx)
@@ -209,6 +207,26 @@ const Dashboard = ({
 
   // Chart data is now loaded in loadAllData function
 
+  // Theme-aware styling for charts
+  const [isDark, setIsDark] = useState(
+    typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark")
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setIsDark(root.classList.contains("dark"));
+    update();
+    const observer = new MutationObserver(() => update());
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const axisStroke = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)";
+  const gridStroke = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const tooltipBg = isDark ? "rgb(16, 16, 16)" : "rgba(255,255,255,0.95)";
+  const tooltipItemColor = isDark ? "rgb(255, 255, 255)" : "rgb(0, 0, 0)";
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[500px]">
@@ -248,8 +266,8 @@ const Dashboard = ({
 
   // Map sensors directly from backend format (already combined)
   const groupedSensors = sensors
-    .filter(sensor => sensor.type === "combined")
-    .map(sensor => ({
+    .filter((sensor) => sensor.type === "combined")
+    .map((sensor) => ({
       sensorId: sensor.sensorId,
       isOnline: sensor.isOnline,
       lastUpdate: sensor.lastUpdate,
@@ -334,11 +352,13 @@ const Dashboard = ({
               {totalEnergyLoss.toFixed(2)} W
             </Typography>
             <Typography variant="paragraph-small" color="medium-grey">
-              Taux: {(Number(currentEnergy?.currentCostPerHour) || 0).toFixed(5)}€/h
+              Taux:{" "}
+              {(Number(currentEnergy?.currentCostPerHour) || 0).toFixed(5)}€/h
             </Typography>
             {currentEnergy?.doorOpenDuration > 0 && (
               <Typography variant="paragraph-small" color="warning">
-                Session: {(Number(currentEnergy?.cumulativeCostEuros) || 0).toFixed(5)}€
+                Session:{" "}
+                {(Number(currentEnergy?.cumulativeCostEuros) || 0).toFixed(5)}€
               </Typography>
             )}
           </div>
@@ -374,7 +394,9 @@ const Dashboard = ({
               {(Number(currentEnergy?.cumulativeCostEuros) || 0).toFixed(5)}€
             </Typography>
             <Typography variant="paragraph-small" color="medium-grey">
-              {currentEnergy?.doorOpenDuration > 0 ? 'En cours' : 'Dernière session'}
+              {currentEnergy?.doorOpenDuration > 0
+                ? "En cours"
+                : "Dernière session"}
             </Typography>
           </div>
           <Euro className="w-8 h-8 text-warning" />
@@ -397,25 +419,18 @@ const Dashboard = ({
                 bottom: 0,
               }}
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-              />
-              <XAxis dataKey="name" stroke="rgba(255,255,255,0.7)" />
-              <YAxis yAxisId="left" stroke="rgba(255,255,255,0.7)" />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                stroke="rgba(255,255,255,0.7)"
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="name" stroke={axisStroke} />
+              <YAxis yAxisId="left" stroke={axisStroke} />
+              <YAxis yAxisId="right" orientation="right" stroke={axisStroke} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgb(16, 16, 16)", // main-black
+                  backgroundColor: tooltipBg,
                   border: "none",
                   borderRadius: "8px",
                 }}
-                labelStyle={{ color: "rgb(47, 206, 101)" }} // main-green
-                itemStyle={{ color: "rgb(255, 255, 255)" }} // main-white
+                labelStyle={{ color: "rgb(47, 206, 101)" }}
+                itemStyle={{ color: tooltipItemColor }}
               />
               <Area
                 yAxisId="left"
@@ -493,7 +508,8 @@ const Dashboard = ({
                     <div className="flex items-center gap-2 text-main-black dark:text-main-white">
                       <Zap className="w-4 h-4 text-warning" />
                       <Typography variant="paragraph-small">
-                        Perte Énergétique: {((sensor.temperature || 0) * 1.0).toFixed(2)} W
+                        Perte Énergétique:{" "}
+                        {((sensor.temperature || 0) * 1.0).toFixed(2)} W
                       </Typography>
                     </div>
                   </div>

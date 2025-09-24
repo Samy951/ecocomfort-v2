@@ -42,46 +42,48 @@ const getBadgeInfo = (badgeType: string) => {
       name: "Économiseur d'énergie",
       description: "Coût mensuel inférieur à 10€",
       icon: "🌱",
-      bgColor: "bg-emerald-500/20"
+      bgColor: "bg-emerald-500/20",
     },
     NIGHT_WATCH: {
       name: "Gardien de nuit",
       description: "Aucune ouverture nocturne",
       icon: "🌙",
-      bgColor: "bg-indigo-500/20"
+      bgColor: "bg-indigo-500/20",
     },
     PERFECT_DAY: {
       name: "Journée parfaite",
       description: "Zéro perte d'énergie sur une journée",
       icon: "⭐",
-      bgColor: "bg-yellow-500/20"
+      bgColor: "bg-yellow-500/20",
     },
     QUICK_CLOSE: {
       name: "Fermeture rapide",
       description: "10+ fermetures en moins de 10 secondes",
       icon: "⚡",
-      bgColor: "bg-orange-500/20"
+      bgColor: "bg-orange-500/20",
     },
     FIRST_WEEK: {
       name: "Première semaine",
       description: "Membre depuis plus d'une semaine",
       icon: "🎉",
-      bgColor: "bg-purple-500/20"
+      bgColor: "bg-purple-500/20",
     },
     WINTER_GUARDIAN: {
       name: "Gardien de l'hiver",
       description: "Optimal par temps froid (<5°C)",
       icon: "❄️",
-      bgColor: "bg-blue-500/20"
-    }
+      bgColor: "bg-blue-500/20",
+    },
   };
 
-  return badges[badgeType as keyof typeof badges] || {
-    name: badgeType,
-    description: "Badge spécial",
-    icon: "🏆",
-    bgColor: "bg-gray-500/20"
-  };
+  return (
+    badges[badgeType as keyof typeof badges] || {
+      name: badgeType,
+      description: "Badge spécial",
+      icon: "🏆",
+      bgColor: "bg-gray-500/20",
+    }
+  );
 };
 
 const Profile = ({
@@ -106,10 +108,43 @@ const Profile = ({
   const [loading, setLoading] = useState(true);
 
   // States pour les nouveaux charts
-  const [energyData, setEnergyData] = useState<Array<{name: string; energyLoss: number; cost: number}>>([]);
-  const [doorStats, setDoorStats] = useState<Array<{day: string; opens: number; closes: number; avgDuration: number}>>([]);
-  const [savings, setSavings] = useState<{thisMonth: number; lastMonth: number; total: number; quickCloseCount: number; estimatedYearly: number} | null>(null);
+  const [energyData, setEnergyData] = useState<
+    Array<{ name: string; energyLoss: number; cost: number }>
+  >([]);
+  const [doorStats, setDoorStats] = useState<
+    Array<{ day: string; opens: number; closes: number; avgDuration: number }>
+  >([]);
+  const [savings, setSavings] = useState<{
+    thisMonth: number;
+    lastMonth: number;
+    total: number;
+    quickCloseCount: number;
+    estimatedYearly: number;
+  } | null>(null);
   const [chartsLoading, setChartsLoading] = useState(true);
+
+  // Theme-aware styling for charts
+  const [isDark, setIsDark] = useState(
+    typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark")
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setIsDark(root.classList.contains("dark"));
+    update();
+    const observer = new MutationObserver(() => update());
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const axisStroke = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.6)";
+  const gridStroke = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const tooltipBg = isDark ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.95)";
+  const tooltipBorder = isDark
+    ? "1px solid rgba(255,255,255,0.2)"
+    : "1px solid rgba(0,0,0,0.1)";
+  const tooltipText = isDark ? "white" : "black";
 
   useEffect(() => {
     loadUserData();
@@ -146,13 +181,13 @@ const Profile = ({
       const [energy, door, savingsData] = await Promise.all([
         apiService.getChartData(),
         apiService.getDoorUsageStats(),
-        apiService.getSavingsStats()
+        apiService.getSavingsStats(),
       ]);
       setEnergyData(energy || []);
       setDoorStats(door || []);
       setSavings(savingsData);
     } catch (error) {
-      console.error('Error loading charts:', error);
+      console.error("Error loading charts:", error);
     } finally {
       setChartsLoading(false);
     }
@@ -160,15 +195,24 @@ const Profile = ({
 
   const getLevelInfo = (level: number) => {
     switch (level) {
-      case 9: return { name: "Challenger", icon: "🌟", color: "text-purple" };
-      case 8: return { name: "Master", icon: "👑", color: "text-yellow" };
-      case 7: return { name: "Diamond", icon: "💎", color: "text-cyan" };
-      case 6: return { name: "Emerald", icon: "💚", color: "text-emerald" };
-      case 5: return { name: "Platinum", icon: "🤍", color: "text-platinum" };
-      case 4: return { name: "Gold", icon: "🥇", color: "text-warning" };
-      case 3: return { name: "Silver", icon: "🥈", color: "text-gray" };
-      case 2: return { name: "Bronze", icon: "🥉", color: "text-orange" };
-      default: return { name: "Iron", icon: "🔨", color: "text-gray-dark" };
+      case 9:
+        return { name: "Challenger", icon: "🌟", color: "text-purple" };
+      case 8:
+        return { name: "Master", icon: "👑", color: "text-yellow" };
+      case 7:
+        return { name: "Diamond", icon: "💎", color: "text-cyan" };
+      case 6:
+        return { name: "Emerald", icon: "💚", color: "text-emerald" };
+      case 5:
+        return { name: "Platinum", icon: "🤍", color: "text-platinum" };
+      case 4:
+        return { name: "Gold", icon: "🥇", color: "text-warning" };
+      case 3:
+        return { name: "Silver", icon: "🥈", color: "text-gray" };
+      case 2:
+        return { name: "Bronze", icon: "🥉", color: "text-orange" };
+      default:
+        return { name: "Iron", icon: "🔨", color: "text-gray-dark" };
     }
   };
 
@@ -279,18 +323,15 @@ const Profile = ({
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={activityData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-              />
-              <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" />
-              <YAxis stroke="rgba(255,255,255,0.5)" />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="date" stroke={axisStroke} />
+              <YAxis stroke={axisStroke} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(255,255,255,0.2)",
+                  backgroundColor: tooltipBg,
+                  border: tooltipBorder,
                   borderRadius: "8px",
-                  color: "white",
+                  color: tooltipText,
                 }}
               />
               <Line
@@ -326,22 +367,26 @@ const Profile = ({
           <div className="space-y-6">
             {/* Ligne 1: 2 charts côte à côte */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
               {/* Chart Consommation Énergétique */}
               <Card variant="glass" padding="md">
-                <h3 className="text-lg font-medium mb-3 text-main-black dark:text-main-white">Consommation 24h</h3>
+                <h3 className="text-lg font-medium mb-3 text-main-black dark:text-main-white">
+                  Consommation 24h
+                </h3>
                 {energyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
                     <LineChart data={energyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                      <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                      <YAxis stroke="rgba(255,255,255,0.5)" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={gridStroke}
+                      />
+                      <XAxis dataKey="name" stroke={axisStroke} />
+                      <YAxis stroke={axisStroke} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "rgba(0,0,0,0.8)",
-                          border: "1px solid rgba(255,255,255,0.2)",
+                          backgroundColor: tooltipBg,
+                          border: tooltipBorder,
                           borderRadius: "8px",
-                          color: "white",
+                          color: tooltipText,
                         }}
                       />
                       <Line
@@ -363,38 +408,64 @@ const Profile = ({
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-main-black/50 dark:text-main-white/50 text-center py-8">Aucune donnée</p>
+                  <p className="text-main-black/50 dark:text-main-white/50 text-center py-8">
+                    Aucune donnée
+                  </p>
                 )}
               </Card>
 
               {/* Chart Utilisation Porte */}
               <Card variant="glass" padding="md">
-                <h3 className="text-lg font-medium mb-3 text-main-black dark:text-main-white">Utilisation porte (7j)</h3>
+                <h3 className="text-lg font-medium mb-3 text-main-black dark:text-main-white">
+                  Utilisation porte (7j)
+                </h3>
                 {doorStats.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={doorStats}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={gridStroke}
+                      />
                       <XAxis
                         dataKey="day"
-                        stroke="rgba(255,255,255,0.5)"
-                        tickFormatter={(value) => new Date(value).toLocaleDateString('fr', { day: 'numeric', month: 'short' })}
+                        stroke={axisStroke}
+                        tickFormatter={(value) =>
+                          new Date(value).toLocaleDateString("fr", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        }
                       />
-                      <YAxis stroke="rgba(255,255,255,0.5)" />
+                      <YAxis stroke={axisStroke} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "rgba(0,0,0,0.8)",
-                          border: "1px solid rgba(255,255,255,0.2)",
+                          backgroundColor: tooltipBg,
+                          border: tooltipBorder,
                           borderRadius: "8px",
-                          color: "white",
+                          color: tooltipText,
                         }}
-                        labelFormatter={(value) => new Date(value).toLocaleDateString('fr')}
+                        labelFormatter={(value) =>
+                          new Date(value).toLocaleDateString("fr")
+                        }
                       />
-                      <Bar dataKey="opens" fill="#8B5CF6" radius={[4, 4, 0, 0]} name="Ouvertures" />
-                      <Bar dataKey="closes" fill="#EC4899" radius={[4, 4, 0, 0]} name="Fermetures" />
+                      <Bar
+                        dataKey="opens"
+                        fill="#8B5CF6"
+                        radius={[4, 4, 0, 0]}
+                        name="Ouvertures"
+                      />
+                      <Bar
+                        dataKey="closes"
+                        fill="#EC4899"
+                        radius={[4, 4, 0, 0]}
+                        name="Fermetures"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-main-black/50 dark:text-main-white/50 text-center py-8">Aucune donnée</p>
+                  <p className="text-main-black/50 dark:text-main-white/50 text-center py-8">
+                    Aucune donnée
+                  </p>
                 )}
               </Card>
             </div>
@@ -402,37 +473,49 @@ const Profile = ({
             {/* Ligne 2: Card Économies */}
             {savings && (
               <Card variant="glass" padding="lg">
-                <h3 className="text-lg font-medium mb-4 text-main-black dark:text-main-white">💰 Économies réalisées</h3>
+                <h3 className="text-lg font-medium mb-4 text-main-black dark:text-main-white">
+                  💰 Économies réalisées
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-main-green">
                       {savings.thisMonth.toFixed(2)}€
                     </p>
-                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">Ce mois</p>
+                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
+                      Ce mois
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-semibold text-main-black dark:text-main-white">
                       {savings.lastMonth.toFixed(2)}€
                     </p>
-                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">Mois dernier</p>
+                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
+                      Mois dernier
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-semibold text-info">
                       {savings.quickCloseCount}
                     </p>
-                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">Fermetures rapides</p>
+                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
+                      Fermetures rapides
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-semibold text-secondary">
                       {savings.total.toFixed(2)}€
                     </p>
-                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">Total économisé</p>
+                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
+                      Total économisé
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-semibold text-warning">
                       {savings.estimatedYearly.toFixed(2)}€
                     </p>
-                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">Projection annuelle</p>
+                    <p className="text-sm text-main-black/70 dark:text-main-white/70 mt-1">
+                      Projection annuelle
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -475,30 +558,41 @@ const Profile = ({
         </h2>
 
         <div className="space-y-3">
-          {gamificationLevel?.achievements?.badges && Array.isArray(gamificationLevel.achievements.badges) && gamificationLevel.achievements.badges.length > 0 ? (
-            gamificationLevel.achievements.badges.map((badgeType: string, index: number) => {
-              const badgeInfo = getBadgeInfo(badgeType);
-              return (
-                <div key={index} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
-                  <div className={`w-10 h-10 ${badgeInfo.bgColor} rounded-full flex items-center justify-center`}>
-                    <span className="text-lg">{badgeInfo.icon}</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-main-black dark:text-main-white">
-                      {badgeInfo.name}
+          {gamificationLevel?.achievements?.badges &&
+          Array.isArray(gamificationLevel.achievements.badges) &&
+          gamificationLevel.achievements.badges.length > 0 ? (
+            gamificationLevel.achievements.badges.map(
+              (badgeType: string, index: number) => {
+                const badgeInfo = getBadgeInfo(badgeType);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 bg-white/5 rounded-lg"
+                  >
+                    <div
+                      className={`w-10 h-10 ${badgeInfo.bgColor} rounded-full flex items-center justify-center`}
+                    >
+                      <span className="text-lg">{badgeInfo.icon}</span>
                     </div>
-                    <div className="text-sm text-main-black/70 dark:text-main-white/70">
-                      {badgeInfo.description}
+                    <div>
+                      <div className="font-medium text-main-black dark:text-main-white">
+                        {badgeInfo.name}
+                      </div>
+                      <div className="text-sm text-main-black/70 dark:text-main-white/70">
+                        {badgeInfo.description}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              }
+            )
           ) : (
             <div className="text-center py-6 text-main-black/50 dark:text-main-white/50">
               <Award className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>Aucun badge obtenu pour le moment</p>
-              <p className="text-xs mt-1">Continuez vos efforts pour débloquer des récompenses !</p>
+              <p className="text-xs mt-1">
+                Continuez vos efforts pour débloquer des récompenses !
+              </p>
             </div>
           )}
         </div>
