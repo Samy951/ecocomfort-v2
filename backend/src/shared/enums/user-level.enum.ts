@@ -1,5 +1,11 @@
 export enum UserLevel {
+  IRON = 'IRON',
   BRONZE = 'BRONZE',
   SILVER = 'SILVER',
-  GOLD = 'GOLD'
+  GOLD = 'GOLD',
+  PLATINUM = 'PLATINUM',
+  EMERALD = 'EMERALD',
+  DIAMOND = 'DIAMOND',
+  MASTER = 'MASTER',
+  CHALLENGER = 'CHALLENGER'
 }

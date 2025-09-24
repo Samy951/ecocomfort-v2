@@ -45,7 +45,7 @@ export class GamificationService {
 
       // Fermeture rapide (< 10 secondes)
       if (durationSeconds < 10) {
-        pointsAwarded.push({ points: 5, reason: 'Fermeture rapide' });
+        pointsAwarded.push({ points: 10, reason: 'Fermeture rapide' });
         user.quickCloseCount += 1;
       }
 
@@ -60,7 +60,7 @@ export class GamificationService {
 
       // Série hebdomadaire (7 jours consécutifs)
       if (user.dailyStreak === 7) {
-        pointsAwarded.push({ points: 100, reason: 'Série de 7 jours optimaux' });
+        pointsAwarded.push({ points: 150, reason: 'Série de 7 jours optimaux' });
       }
 
       // Mise à jour points et niveau
@@ -115,16 +115,22 @@ export class GamificationService {
       .reduce((sum, state) => sum + state.durationSeconds, 0);
 
     if (totalOpenTimeSeconds < 300) { // < 5 minutes
-      return { points: 20, reason: 'Journée optimale (< 5 min d\'ouverture)' };
+      return { points: 30, reason: 'Journée optimale (< 5 min d\'ouverture)' };
     }
 
     return null;
   }
 
   private calculateLevel(points: number): UserLevel {
-    if (points >= 500) return UserLevel.GOLD;
+    if (points >= 1500) return UserLevel.CHALLENGER;
+    if (points >= 1100) return UserLevel.MASTER;
+    if (points >= 800) return UserLevel.DIAMOND;
+    if (points >= 550) return UserLevel.EMERALD;
+    if (points >= 350) return UserLevel.PLATINUM;
+    if (points >= 200) return UserLevel.GOLD;
     if (points >= 100) return UserLevel.SILVER;
-    return UserLevel.BRONZE;
+    if (points >= 50) return UserLevel.BRONZE;
+    return UserLevel.IRON;
   }
 
   private async checkAndAwardBadges(userId: number): Promise<void> {
