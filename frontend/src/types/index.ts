@@ -93,10 +93,8 @@ export interface ApiResponse<T> {
 
 // WebSocket Event Types
 export interface DoorStateChangedData {
-  sensor_id: string;
-  door_state: boolean;
-  timestamp: string;
-  room_name: string;
+  isOpen: boolean;
+  timestamp: Date;
 }
 
 export interface SensorDataUpdatedData {

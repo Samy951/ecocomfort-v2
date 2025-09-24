@@ -29,7 +29,7 @@ export const NotificationCenter: React.FC = () => {
   useEffect(() => {
     // Adaptation des événements WebSocket existants
     const unsubscribeDoorState = webSocketService.on('door-state-changed', (data) => {
-      addNotification(`Porte ${data.door_state ? 'ouverte' : 'fermée'}`, 'info');
+      addNotification(`Porte ${data.isOpen ? 'ouverte' : 'fermée'}`, 'info');
     });
 
     const unsubscribeSensorData = webSocketService.on('sensor-data-updated', (data) => {

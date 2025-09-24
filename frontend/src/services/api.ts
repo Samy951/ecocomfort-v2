@@ -395,7 +395,17 @@ class ApiService {
       }>(`${prefix}/gamification/stats`);
 
       // Convert level string to number for compatibility
-      const levelMap = { BRONZE: 1, SILVER: 2, GOLD: 3 };
+      const levelMap = {
+        IRON: 1,
+        BRONZE: 2,
+        SILVER: 3,
+        GOLD: 4,
+        PLATINUM: 5,
+        EMERALD: 6,
+        DIAMOND: 7,
+        MASTER: 8,
+        CHALLENGER: 9
+      };
       const levelNumber = levelMap[response.level as keyof typeof levelMap] || 1;
 
       return {

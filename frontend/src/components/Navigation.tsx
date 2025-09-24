@@ -59,10 +59,17 @@ const Navigation: React.FC<NavigationProps> = ({
   };
 
   const getLevelIcon = (level: number) => {
-    if (level >= 50) return "🏆";
-    if (level >= 30) return "🥇";
-    if (level >= 15) return "🥈";
-    return "🥉";
+    switch (level) {
+      case 9: return "🌟"; // Challenger
+      case 8: return "👑"; // Master
+      case 7: return "💎"; // Diamond
+      case 6: return "💚"; // Emerald
+      case 5: return "🤍"; // Platinum
+      case 4: return "🥇"; // Gold
+      case 3: return "🥈"; // Silver
+      case 2: return "🥉"; // Bronze
+      default: return "🔨"; // Iron
+    }
   };
 
   return (

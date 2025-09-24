@@ -31,23 +31,48 @@ function App() {
       const gamificationData = await apiService.getGamificationData();
 
       // Calculer la progression pour le niveau suivant
-      const levelThresholds = { 1: 100, 2: 500, 3: 1000 }; // BRONZE: 100, SILVER: 500, GOLD: 1000
-      const currentLevelThreshold = levelThresholds[gamificationData.level as keyof typeof levelThresholds] || 100;
-      const previousLevelThreshold = levelThresholds[(gamificationData.level - 1) as keyof typeof levelThresholds] || 0;
-      const pointsForCurrent = gamificationData.points - previousLevelThreshold;
-      const pointsForNext = currentLevelThreshold - previousLevelThreshold;
-      const pointsToNext = currentLevelThreshold - gamificationData.points;
-      const progressPercent = Math.max(0, Math.min(100, (pointsForCurrent / pointsForNext) * 100));
+      const levelThresholds = {
+        1: 50,    // IRON: 0-49
+        2: 100,   // BRONZE: 50-99
+        3: 200,   // SILVER: 100-199
+        4: 350,   // GOLD: 200-349
+        5: 550,   // PLATINUM: 350-549
+        6: 800,   // EMERALD: 550-799
+        7: 1100,  // DIAMOND: 800-1099
+        8: 1500,  // MASTER: 1100-1499
+        9: 9999   // CHALLENGER: 1500+
+      };
+
+      const currentLevel = gamificationData.level;
+      const isMaxLevel = currentLevel >= 9;
+
+      let pointsForCurrent, pointsForNext, pointsToNext, progressPercent;
+
+      if (isMaxLevel) {
+        // Niveau maximum atteint
+        pointsForCurrent = gamificationData.points;
+        pointsForNext = gamificationData.points;
+        pointsToNext = 0;
+        progressPercent = 100;
+      } else {
+        const currentThreshold = levelThresholds[currentLevel as keyof typeof levelThresholds] || 50;
+        const previousThreshold = currentLevel > 1 ? (levelThresholds[(currentLevel - 1) as keyof typeof levelThresholds] || 0) : 0;
+
+        pointsForCurrent = gamificationData.points - previousThreshold;
+        pointsForNext = currentThreshold - previousThreshold;
+        pointsToNext = Math.max(0, currentThreshold - gamificationData.points);
+        progressPercent = pointsForNext > 0 ? Math.max(0, Math.min(100, (pointsForCurrent / pointsForNext) * 100)) : 100;
+      }
 
       setGamification({
         current_level: gamificationData.level || 1,
-        next_level: (gamificationData.level || 1) + 1,
+        next_level: isMaxLevel ? currentLevel : (gamificationData.level || 1) + 1,
         total_points: gamificationData.points || 0,
         points_for_current: pointsForCurrent,
         points_for_next: pointsForNext,
         points_to_next: Math.max(0, pointsToNext),
         progress_percent: progressPercent,
-        is_max_level: gamificationData.level >= 3,
+        is_max_level: isMaxLevel,
         achievements: gamificationData.achievements,
       });
 

@@ -159,12 +159,17 @@ const Profile = ({
   };
 
   const getLevelInfo = (level: number) => {
-    if (level >= 50)
-      return { name: "Expert", icon: "🏆", color: "text-warning" };
-    if (level >= 30) return { name: "Avancé", icon: "🥇", color: "text-info" };
-    if (level >= 15)
-      return { name: "Intermédiaire", icon: "🥈", color: "text-success" };
-    return { name: "Débutant", icon: "🥉", color: "text-medium-grey" };
+    switch (level) {
+      case 9: return { name: "Challenger", icon: "🌟", color: "text-purple" };
+      case 8: return { name: "Master", icon: "👑", color: "text-yellow" };
+      case 7: return { name: "Diamond", icon: "💎", color: "text-cyan" };
+      case 6: return { name: "Emerald", icon: "💚", color: "text-emerald" };
+      case 5: return { name: "Platinum", icon: "🤍", color: "text-platinum" };
+      case 4: return { name: "Gold", icon: "🥇", color: "text-warning" };
+      case 3: return { name: "Silver", icon: "🥈", color: "text-gray" };
+      case 2: return { name: "Bronze", icon: "🥉", color: "text-orange" };
+      default: return { name: "Iron", icon: "🔨", color: "text-gray-dark" };
+    }
   };
 
   if (loading) {
