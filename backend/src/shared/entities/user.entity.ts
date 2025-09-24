@@ -30,7 +30,7 @@ export class User {
   @Column({ default: 0 })
   points: number;
 
-  @Column({ type: 'enum', enum: UserLevel, default: UserLevel.BRONZE })
+  @Column({ type: 'enum', enum: UserLevel, default: UserLevel.IRON })
   level: UserLevel;
 
   @Column({ default: 0 })
