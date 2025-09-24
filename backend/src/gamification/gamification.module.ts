@@ -7,6 +7,7 @@ import { EnergyMetric } from '../shared/entities/energy-metric.entity';
 import { WebSocketModule } from '../websocket/websocket.module';
 import { GamificationService } from './gamification.service';
 import { GamificationController } from './gamification.controller';
+import { TestNotificationsController } from './test-notifications.controller';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { GamificationController } from './gamification.controller';
     WebSocketModule,
   ],
   providers: [GamificationService],
-  controllers: [GamificationController],
+  controllers: [GamificationController, TestNotificationsController],
   exports: [GamificationService],
 })
 export class GamificationModule {}

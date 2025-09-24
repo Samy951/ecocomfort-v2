@@ -434,4 +434,172 @@ describe('DashboardController', () => {
       expect(result.pagination.totalPages).toBe(0);
     });
   });
+
+  describe('getDoorUsageStats', () => {
+    it('should return door usage statistics', async () => {
+      // Arrange
+      const mockStats = [
+        { day: '2025-09-23', opens: '5', closes: '5', avgduration: '15.5' },
+        { day: '2025-09-22', opens: '3', closes: '3', avgduration: '8.2' }
+      ];
+
+      doorStateRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue(mockStats)
+      });
+
+      // Act
+      const result = await controller.getDoorUsageStats();
+
+      // Assert
+      expect(result).toHaveLength(2);
+      expect(result[0].opens).toBe(5);
+      expect(result[0].closes).toBe(5);
+      expect(result[0].avgDuration).toBe(15.5);
+      expect(result[1].opens).toBe(3);
+      expect(result[1].avgDuration).toBe(8.2);
+    });
+
+    it('should return empty array when no data', async () => {
+      // Arrange
+      doorStateRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([])
+      });
+
+      // Act
+      const result = await controller.getDoorUsageStats();
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getSavingsStats', () => {
+    it('should return cached savings when available', async () => {
+      // Arrange
+      const cachedData = {
+        thisMonth: 2.5,
+        lastMonth: 1.8,
+        total: 4.3,
+        quickCloseCount: 50,
+        estimatedYearly: 30
+      };
+      cacheManager.get.mockResolvedValue(cachedData);
+
+      // Act
+      const result = await controller.getSavingsStats();
+
+      // Assert
+      expect(result).toEqual(cachedData);
+      expect(doorStateRepository.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('should calculate and cache savings', async () => {
+      // Arrange
+      cacheManager.get.mockResolvedValue(null);
+
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getRawOne: jest.fn()
+          .mockResolvedValueOnce({ quickCloses: '10', totalCloses: '20' })
+          .mockResolvedValueOnce({ quickCloses: '8' })
+      };
+
+      doorStateRepository.createQueryBuilder = jest.fn().mockReturnValue(mockQueryBuilder);
+
+      // Act
+      const result = await controller.getSavingsStats();
+
+      // Assert
+      expect(result.thisMonth).toBe(0.5); // 10 * 0.05
+      expect(result.lastMonth).toBe(0.4); // 8 * 0.05
+      expect(result.total).toBe(0.9); // 0.5 + 0.4
+      expect(result.quickCloseCount).toBe(10);
+      expect(result.estimatedYearly).toBe(6); // 10 * 0.05 * 12
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        expect.stringContaining('savings-stats'),
+        expect.any(Object),
+        300
+      );
+    });
+  });
+
+  describe('getWeeklyActivity', () => {
+    it('should return weekly activity data', async () => {
+      // Arrange
+      const mockStats = [
+        { date: '2025-09-20', actions: '3', totalenergy: '75' },
+        { date: '2025-09-21', actions: '5', totalenergy: '60' },
+        { date: '2025-09-22', actions: '2', totalenergy: '90' }
+      ];
+
+      energyMetricRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue(mockStats)
+      });
+
+      // Act
+      const result = await controller.getWeeklyActivity();
+
+      // Assert
+      expect(result).toHaveLength(3);
+      expect(result[0]).toEqual({
+        date: '2025-09-20',
+        points: 15, // 3 * 5
+        energy_saved: 25 // 100 - 75
+      });
+      expect(result[1].points).toBe(25); // 5 * 5
+      expect(result[2].energy_saved).toBe(10); // 100 - 90
+    });
+
+    it('should return empty array when no activity', async () => {
+      // Arrange
+      energyMetricRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([])
+      });
+
+      // Act
+      const result = await controller.getWeeklyActivity();
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it('should handle negative energy values', async () => {
+      // Arrange
+      const mockStats = [
+        { date: '2025-09-20', actions: '1', totalenergy: '150' } // Plus que baseline
+      ];
+
+      energyMetricRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue(mockStats)
+      });
+
+      // Act
+      const result = await controller.getWeeklyActivity();
+
+      // Assert
+      expect(result[0].energy_saved).toBe(0); // Math.max(0, -50) = 0
+    });
+  });
 });

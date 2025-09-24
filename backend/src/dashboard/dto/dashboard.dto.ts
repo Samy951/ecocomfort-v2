@@ -198,3 +198,48 @@ export class EnergyHistoryDto {
   })
   pagination: PaginationDto;
 }
+
+export class DoorUsageStatsDto {
+  @ApiProperty({ description: 'Date of the statistics' })
+  day: string;
+
+  @ApiProperty({ description: 'Number of door openings' })
+  opens: number;
+
+  @ApiProperty({ description: 'Number of door closures' })
+  closes: number;
+
+  @ApiProperty({
+    description: 'Average door open duration in seconds',
+    nullable: true
+  })
+  avgDuration: number;
+}
+
+export class SavingsStatsDto {
+  @ApiProperty({ description: 'Savings for current month in euros' })
+  thisMonth: number;
+
+  @ApiProperty({ description: 'Savings for last month in euros' })
+  lastMonth: number;
+
+  @ApiProperty({ description: 'Total savings in euros' })
+  total: number;
+
+  @ApiProperty({ description: 'Number of quick door closes this month' })
+  quickCloseCount: number;
+
+  @ApiProperty({ description: 'Estimated yearly savings in euros' })
+  estimatedYearly: number;
+}
+
+export class ActivityDataDto {
+  @ApiProperty({ description: 'Date of activity' })
+  date: string;
+
+  @ApiProperty({ description: 'Points earned that day' })
+  points: number;
+
+  @ApiProperty({ description: 'Energy saved in watts' })
+  energy_saved: number;
+}

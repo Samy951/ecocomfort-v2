@@ -364,11 +364,51 @@ class ApiService {
     level: number;
     points: number;
     badges: string[];
-    achievements: Record<string, unknown>;
+    achievements: {
+      badges: string[];
+      dailyStreak: number;
+      quickCloseCount: number;
+      monthlyStats: {
+        energyLossWatts: number;
+        costEuros: number;
+        avgDailyOpenTimeMinutes: number;
+      };
+    };
   }> {
     const prefix = this.getEndpointPrefix();
     try {
-      return await this.makeRequest(`${prefix}/gamification/stats`);
+      const response = await this.makeRequest<{
+        userId: number;
+        points: number;
+        level: string;
+        dailyStreak: number;
+        quickCloseCount: number;
+        badges: Array<{
+          type: string;
+          earnedAt: string;
+        }>;
+        monthlyStats: {
+          energyLossWatts: number;
+          costEuros: number;
+          avgDailyOpenTimeMinutes: number;
+        };
+      }>(`${prefix}/gamification/stats`);
+
+      // Convert level string to number for compatibility
+      const levelMap = { BRONZE: 1, SILVER: 2, GOLD: 3 };
+      const levelNumber = levelMap[response.level as keyof typeof levelMap] || 1;
+
+      return {
+        level: levelNumber,
+        points: response.points,
+        badges: response.badges.map(badge => badge.type),
+        achievements: {
+          badges: response.badges.map(badge => badge.type),
+          dailyStreak: response.dailyStreak,
+          quickCloseCount: response.quickCloseCount,
+          monthlyStats: response.monthlyStats,
+        },
+      };
     } catch (error) {
       // Show toast notification for missing endpoint
       console.warn("Système de gamification bientôt disponible");
@@ -377,7 +417,16 @@ class ApiService {
         level: 1,
         points: 0,
         badges: [],
-        achievements: {},
+        achievements: {
+          badges: [],
+          dailyStreak: 0,
+          quickCloseCount: 0,
+          monthlyStats: {
+            energyLossWatts: 0,
+            costEuros: 0,
+            avgDailyOpenTimeMinutes: 0,
+          },
+        },
       };
     }
   }
@@ -468,6 +517,54 @@ class ApiService {
   async logout(): Promise<void> {
     // Backend doesn't have logout endpoint, just clear local auth
     this.clearAuthToken();
+  }
+
+  // Door usage stats
+  async getDoorUsageStats(): Promise<Array<{
+    day: string;
+    opens: number;
+    closes: number;
+    avgDuration: number;
+  }>> {
+    const prefix = this.getEndpointPrefix();
+    return this.makeRequest<Array<{
+      day: string;
+      opens: number;
+      closes: number;
+      avgDuration: number;
+    }>>(`${prefix}/dashboard/stats/door-usage`);
+  }
+
+  // Savings stats
+  async getSavingsStats(): Promise<{
+    thisMonth: number;
+    lastMonth: number;
+    total: number;
+    quickCloseCount: number;
+    estimatedYearly: number;
+  }> {
+    const prefix = this.getEndpointPrefix();
+    return this.makeRequest<{
+      thisMonth: number;
+      lastMonth: number;
+      total: number;
+      quickCloseCount: number;
+      estimatedYearly: number;
+    }>(`${prefix}/dashboard/stats/savings`);
+  }
+
+  // Weekly activity
+  async getWeeklyActivity(): Promise<Array<{
+    date: string;
+    points: number;
+    energy_saved: number;
+  }>> {
+    const prefix = this.getEndpointPrefix();
+    return this.makeRequest<Array<{
+      date: string;
+      points: number;
+      energy_saved: number;
+    }>>(`${prefix}/dashboard/activity/weekly`);
   }
 
   // Health check
