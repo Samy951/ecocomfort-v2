@@ -10,6 +10,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 import webSocketService from "./services/websocket";
 import apiService from "./services/api";
 import type { GamificationLevel } from "./types";
+import { NotificationCenter } from "./components/notifications/NotificationCenter";
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -28,16 +29,60 @@ function App() {
     try {
       // Essayer de récupérer les données de gamification du backend
       const gamificationData = await apiService.getGamificationData();
+
+      // Calculer la progression pour le niveau suivant
+      const levelThresholds = {
+        1: 50,    // IRON: 0-49
+        2: 100,   // BRONZE: 50-99
+        3: 200,   // SILVER: 100-199
+        4: 350,   // GOLD: 200-349
+        5: 550,   // PLATINUM: 350-549
+        6: 800,   // EMERALD: 550-799
+        7: 1100,  // DIAMOND: 800-1099
+        8: 1500,  // MASTER: 1100-1499
+        9: 9999   // CHALLENGER: 1500+
+      };
+
+      const currentLevel = gamificationData.level;
+      const isMaxLevel = currentLevel >= 9;
+
+      let pointsForCurrent, pointsForNext, pointsToNext, progressPercent;
+
+      if (isMaxLevel) {
+        // Niveau maximum atteint
+        pointsForCurrent = gamificationData.points;
+        pointsForNext = gamificationData.points;
+        pointsToNext = 0;
+        progressPercent = 100;
+      } else {
+        const currentThreshold = levelThresholds[currentLevel as keyof typeof levelThresholds] || 50;
+        const previousThreshold = currentLevel > 1 ? (levelThresholds[(currentLevel - 1) as keyof typeof levelThresholds] || 0) : 0;
+
+        pointsForCurrent = gamificationData.points - previousThreshold;
+        pointsForNext = currentThreshold - previousThreshold;
+        pointsToNext = Math.max(0, currentThreshold - gamificationData.points);
+        progressPercent = pointsForNext > 0 ? Math.max(0, Math.min(100, (pointsForCurrent / pointsForNext) * 100)) : 100;
+      }
+
       setGamification({
         current_level: gamificationData.level || 1,
-        next_level: (gamificationData.level || 1) + 1,
+        next_level: isMaxLevel ? currentLevel : (gamificationData.level || 1) + 1,
         total_points: gamificationData.points || 0,
-        points_for_current: 0, // TODO: Ajouter au backend
-        points_for_next: 100, // TODO: Ajouter au backend
-        points_to_next: 100, // TODO: Ajouter au backend
-        progress_percent: 0, // TODO: Ajouter au backend
-        is_max_level: false, // TODO: Ajouter au backend
+        points_for_current: pointsForCurrent,
+        points_for_next: pointsForNext,
+        points_to_next: Math.max(0, pointsToNext),
+        progress_percent: progressPercent,
+        is_max_level: isMaxLevel,
+        achievements: gamificationData.achievements,
       });
+
+      // Mettre à jour currentUser avec les vraies données
+      setCurrentUser(prev => prev ? {
+        ...prev,
+        points: gamificationData.points || 0,
+        level: gamificationData.level || 1,
+      } : null);
+
     } catch (gamificationError) {
       // Silencieux - endpoint pas encore implémenté
       setGamification(null);
@@ -160,6 +205,7 @@ function App() {
                   userPoints={currentUser.points}
                   userLevel={currentUser.level}
                   gamificationLevel={gamification}
+                  currentUser={currentUser}
                 />
               }
             />
@@ -168,6 +214,7 @@ function App() {
           </Routes>
         </Suspense>
       </Layout>
+      <NotificationCenter />
     </Router>
   );
 }

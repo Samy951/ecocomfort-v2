@@ -37,6 +37,16 @@ export interface GamificationLevel {
   points_to_next: number;
   progress_percent: number;
   is_max_level: boolean;
+  achievements?: {
+    badges: string[];
+    dailyStreak: number;
+    quickCloseCount: number;
+    monthlyStats: {
+      energyLossWatts: number;
+      costEuros: number;
+      avgDailyOpenTimeMinutes: number;
+    };
+  };
 }
 
 // Dashboard
@@ -83,10 +93,8 @@ export interface ApiResponse<T> {
 
 // WebSocket Event Types
 export interface DoorStateChangedData {
-  sensor_id: string;
-  door_state: boolean;
-  timestamp: string;
-  room_name: string;
+  isOpen: boolean;
+  timestamp: Date;
 }
 
 export interface SensorDataUpdatedData {
@@ -96,22 +104,24 @@ export interface SensorDataUpdatedData {
 }
 
 export interface PointsAwardedData {
-  points: number;
-  reason: string;
-  total_points: number;
-  level: number;
+  userId: number;
+  pointsAwarded: Array<{points: number, reason: string}>;
+  newTotal: number;
+  timestamp: Date;
 }
 
 export interface BadgeAwardedData {
-  badge_name: string;
-  badge_description: string;
-  points_awarded: number;
+  userId: number;
+  badgeType: string;
+  description: string;
+  earnedAt: Date;
 }
 
 export interface LevelUpData {
-  new_level: number;
-  points_required: number;
-  total_points: number;
+  userId: number;
+  oldLevel: string;
+  newLevel: string;
+  timestamp: Date;
 }
 
 export type WebSocketEventData =

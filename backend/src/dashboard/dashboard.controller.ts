@@ -36,6 +36,9 @@ import {
   HourlyMetric,
   DailyTotals,
   PaginationDto,
+  DoorUsageStatsDto,
+  SavingsStatsDto,
+  ActivityDataDto,
 } from './dto/dashboard.dto';
 
 @ApiTags('Dashboard')
@@ -403,6 +406,118 @@ export class DashboardController {
         critical: 0,
       },
     };
+  }
+
+  @Get('stats/door-usage')
+  @ApiOperation({ summary: 'Get door usage statistics for last 7 days' })
+  @ApiResponse({
+    status: 200,
+    description: 'Door usage statistics by day',
+  })
+  async getDoorUsageStats(): Promise<DoorUsageStatsDto[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const stats = await this.doorStateRepository
+      .createQueryBuilder('ds')
+      .select([
+        'DATE_TRUNC(\'day\', ds.timestamp) as day',
+        'COUNT(CASE WHEN ds.isOpen = true THEN 1 END) as opens',
+        'COUNT(CASE WHEN ds.isOpen = false THEN 1 END) as closes',
+        'AVG(ds.durationSeconds) as avgDuration',
+      ])
+      .where('ds.timestamp > :sevenDaysAgo', { sevenDaysAgo })
+      .groupBy('DATE_TRUNC(\'day\', ds.timestamp)')
+      .orderBy('day', 'DESC')
+      .getRawMany();
+
+    return stats.map(stat => ({
+      day: stat.day,
+      opens: parseInt(stat.opens) || 0,
+      closes: parseInt(stat.closes) || 0,
+      avgDuration: parseFloat(stat.avgduration) || 0,
+    }));
+  }
+
+  @Get('stats/savings')
+  @ApiOperation({ summary: 'Get energy savings statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Savings statistics',
+  })
+  async getSavingsStats(): Promise<SavingsStatsDto> {
+    // Cache key avec date du jour
+    const cacheKey = `savings-stats-${new Date().toISOString().split('T')[0]}`;
+    const cached = await this.cacheManager.get<SavingsStatsDto>(cacheKey);
+    if (cached) return cached;
+
+    // Mois actuel
+    const currentMonth = await this.doorStateRepository
+      .createQueryBuilder('ds')
+      .select([
+        'COUNT(CASE WHEN ds.durationSeconds < 10 THEN 1 END) as quickCloses',
+        'COUNT(*) as totalCloses',
+      ])
+      .where('ds.isOpen = false')
+      .andWhere('EXTRACT(MONTH FROM ds.timestamp) = EXTRACT(MONTH FROM CURRENT_DATE)')
+      .andWhere('EXTRACT(YEAR FROM ds.timestamp) = EXTRACT(YEAR FROM CURRENT_DATE)')
+      .getRawOne();
+
+    // Mois précédent
+    const lastMonth = await this.doorStateRepository
+      .createQueryBuilder('ds')
+      .select('COUNT(CASE WHEN ds.durationSeconds < 10 THEN 1 END) as quickCloses')
+      .where('ds.isOpen = false')
+      .andWhere('EXTRACT(MONTH FROM ds.timestamp) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL \'1 month\')')
+      .andWhere('EXTRACT(YEAR FROM ds.timestamp) = EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL \'1 month\')')
+      .getRawOne();
+
+    const SAVINGS_PER_QUICK_CLOSE = 0.05;
+    const currentQuickCloses = parseInt(currentMonth?.quickCloses) || 0;
+    const lastQuickCloses = parseInt(lastMonth?.quickCloses) || 0;
+
+    const result: SavingsStatsDto = {
+      thisMonth: currentQuickCloses * SAVINGS_PER_QUICK_CLOSE,
+      lastMonth: lastQuickCloses * SAVINGS_PER_QUICK_CLOSE,
+      total: (currentQuickCloses + lastQuickCloses) * SAVINGS_PER_QUICK_CLOSE,
+      quickCloseCount: currentQuickCloses,
+      estimatedYearly: currentQuickCloses * SAVINGS_PER_QUICK_CLOSE * 12,
+    };
+
+    await this.cacheManager.set(cacheKey, result, 300);
+    return result;
+  }
+
+  /**
+   * Get user activity for last 7 days
+   */
+  @Get('activity/weekly')
+  @ApiOperation({ summary: 'Get user activity for last 7 days' })
+  @ApiResponse({
+    status: 200,
+    description: 'User activity by day',
+  })
+  async getWeeklyActivity(): Promise<ActivityDataDto[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const energyStats = await this.energyMetricRepository
+      .createQueryBuilder('em')
+      .select([
+        'DATE_TRUNC(\'day\', em.createdAt) as date',
+        'COUNT(*) as actions',
+        'SUM(em.energyLossWatts) as totalEnergy',
+      ])
+      .where('em.createdAt > :sevenDaysAgo', { sevenDaysAgo })
+      .groupBy('DATE_TRUNC(\'day\', em.createdAt)')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return energyStats.map(stat => ({
+      date: stat.date,
+      points: parseInt(stat.actions) * 5,
+      energy_saved: Math.max(0, 100 - parseFloat(stat.totalenergy || 0)),
+    }));
   }
 
   private async generateDailyReport(date: string): Promise<DailyReportDto> {
